@@ -32,18 +32,22 @@ import java.util.IdentityHashMap;
  * A thread-local variable that is notified when a thread terminates and
  * it has been initialized in the terminating thread (even if it was
  * initialized with a null value).
+ * <p>
+ * 继承自 ThreadLocal 类。线程终止的时候会收到通知。
  */
 public class TerminatingThreadLocal<T> extends ThreadLocal<T> {
 
     @Override
     public void set(T value) {
         super.set(value);
+        // 注册
         register(this);
     }
 
     @Override
     public void remove() {
         super.remove();
+        // 反注册
         unregister(this);
     }
 
@@ -71,10 +75,14 @@ public class TerminatingThreadLocal<T> extends ThreadLocal<T> {
         }
     }
 
-    private void _threadTerminated() { threadTerminated(get()); }
+    private void _threadTerminated() {
+        threadTerminated(get());
+    }
 
     /**
      * Register given TerminatingThreadLocal
+     * <p>
+     * 放入 REGISTRY
      *
      * @param tl the ThreadLocal to register
      */
@@ -84,6 +92,8 @@ public class TerminatingThreadLocal<T> extends ThreadLocal<T> {
 
     /**
      * Unregister given TerminatingThreadLocal
+     * <p>
+     * 从 REGISTRY 中移除
      *
      * @param tl the ThreadLocal to unregister
      */
@@ -94,12 +104,15 @@ public class TerminatingThreadLocal<T> extends ThreadLocal<T> {
     /**
      * a per-thread registry of TerminatingThreadLocal(s) that have been registered
      * but later not unregistered in a particular thread.
+     * <p>
+     * 注册中心。
+     * 一个 ThreadLocal Map，为每个线程创建一个副本。
      */
     public static final ThreadLocal<Collection<TerminatingThreadLocal<?>>> REGISTRY =
-        new ThreadLocal<>() {
-            @Override
-            protected Collection<TerminatingThreadLocal<?>> initialValue() {
-                return Collections.newSetFromMap(new IdentityHashMap<>(4));
-            }
-        };
+            new ThreadLocal<>() {
+                @Override
+                protected Collection<TerminatingThreadLocal<?>> initialValue() {
+                    return Collections.newSetFromMap(new IdentityHashMap<>(4));
+                }
+            };
 }

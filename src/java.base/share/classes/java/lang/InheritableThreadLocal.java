@@ -24,7 +24,6 @@
  */
 
 package java.lang;
-import java.lang.ref.*;
 
 /**
  * This class extends {@code ThreadLocal} to provide inheritance of values
@@ -41,20 +40,23 @@ import java.lang.ref.*;
  * automatically transmitted to any child threads that are created.
  *
  * <p>Note: During the creation of a new {@link
- * Thread#Thread(ThreadGroup,Runnable,String,long,boolean) thread}, it is
+ * Thread#Thread(ThreadGroup, Runnable, String, long, boolean) thread}, it is
  * possible to <i>opt out</i> of receiving initial values for inheritable
  * thread-local variables.
  *
- * @author  Josh Bloch and Doug Lea
- * @see     ThreadLocal
- * @since   1.2
+ * @author Josh Bloch and Doug Lea
+ * @see ThreadLocal
+ * @since 1.2
  */
 
 public class InheritableThreadLocal<T> extends ThreadLocal<T> {
     /**
      * Creates an inheritable thread local variable.
+     * <p>
+     * 创建一个 可继承的 ThreadLocal
      */
-    public InheritableThreadLocal() {}
+    public InheritableThreadLocal() {
+    }
 
     /**
      * Computes the child's initial value for this inheritable thread-local
@@ -78,13 +80,13 @@ public class InheritableThreadLocal<T> extends ThreadLocal<T> {
      * @param t the current thread
      */
     ThreadLocalMap getMap(Thread t) {
-       return t.inheritableThreadLocals;
+        return t.inheritableThreadLocals;
     }
 
     /**
      * Create the map associated with a ThreadLocal.
      *
-     * @param t the current thread
+     * @param t          the current thread
      * @param firstValue value for the initial entry of the table.
      */
     void createMap(Thread t, T firstValue) {
