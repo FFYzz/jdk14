@@ -408,6 +408,7 @@ public class ThreadLocal<T> {
          * as "stale entries" in the code that follows.
          * <p>
          * 继承自 WeakReference，stale entries 指的是 entry.get() == null 的情况
+         * Entry 中的 key 是一个  WeakReference。因为 Reference 中的 referent 成员变量指向 key
          */
         static class Entry extends WeakReference<ThreadLocal<?>> {
             /**
@@ -738,7 +739,7 @@ public class ThreadLocal<T> {
                 if (k == key) {
                     // 替换
                     e.value = value;
-                    // 暂存，将原来要 expunge 的 entry 暂存到 i 位置
+                    // 暂存，将原来要 expunge 的 entry 存到 i 位置
                     tab[i] = tab[staleSlot];
                     // 将 e 设置到 staleSlot 位置
                     tab[staleSlot] = e;
@@ -756,7 +757,7 @@ public class ThreadLocal<T> {
                 // If we didn't find stale entry on backward scan, the
                 // first stale entry seen while scanning for key is the
                 // first still present in the run.
-                // 如果是 stale entry && 往前没有找到 stale entry
+                // 如果又遇到了 stale entry && 往前没有找到 stale entry
                 if (k == null && slotToExpunge == staleSlot)
                     // 更新需要处理的 index
                     slotToExpunge = i;
@@ -827,15 +828,14 @@ public class ThreadLocal<T> {
                     int h = k.threadLocalHashCode & (len - 1);
                     // 如果计算出来的位置与当前位置不同
                     // 正常情况下计算出来的 h 和 i 应该相等
-                    // 如果不相等，说明是之前的哈希冲突导致的往后放了，所以需要往前移动。
+                    // 如果不相等，说明是之前的哈希冲突导致的往后放了，所以需要移动。
                     if (h != i) {
                         // 将当前位置置为空
                         tab[i] = null;
 
                         // Unlike Knuth 6.4 Algorithm R, we must scan until
                         // null because multiple entries could have been stale.
-                        // 放到计算出来的 null 的位置
-                        // 最前面也只能到传入的 staleSlot 位置
+                        // 根据其计算出来的正确的位置，往后找到一个合适的位置。
                         while (tab[h] != null)
                             h = nextIndex(h, len);
                         tab[h] = e;
