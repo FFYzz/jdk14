@@ -35,17 +35,22 @@
 
 package java.util.concurrent.locks;
 
+import jdk.internal.vm.annotation.ReservedStackAccess;
+
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
-import jdk.internal.vm.annotation.ReservedStackAccess;
 
 /**
  * An implementation of {@link ReadWriteLock} supporting similar
  * semantics to {@link ReentrantLock}.
  * <p>This class has the following properties:
+ * <p>
+ * {@link ReadWriteLock} 接口的实现，功能类似于 {@link ReentrantLock}
  *
  * <ul>
  * <li><b>Acquisition order</b>
+ * <p>
+ * 获取顺序，支持公平与非公平
  *
  * <p>This class does not impose a reader or writer preference
  * ordering for lock access.  However, it does support an optional
@@ -56,12 +61,12 @@ import jdk.internal.vm.annotation.ReservedStackAccess;
  * <dd>When constructed as non-fair (the default), the order of entry
  * to the read and write lock is unspecified, subject to reentrancy
  * constraints.  A nonfair lock that is continuously contended may
- * indefinitely postpone one or more reader or writer threads, but
+ * indefinitely 模糊的/无限期的 postpone 延期/延迟 one or more reader or writer threads, but
  * will normally have higher throughput than a fair lock.
  *
  * <dt><b><i>Fair mode</i></b>
  * <dd>When constructed as fair, threads contend for entry using an
- * approximately arrival-order policy. When the currently held lock
+ * approximately arrival-order policy 到达顺序策略. When the currently held lock
  * is released, either the longest-waiting single writer thread will
  * be assigned the write lock, or if there is a group of reader threads
  * waiting longer than all waiting writer threads, that group will be
@@ -166,7 +171,7 @@ import jdk.internal.vm.annotation.ReservedStackAccess;
  *     }
  *   }
  * }}</pre>
- *
+ * <p>
  * ReentrantReadWriteLocks can be used to improve concurrency in some
  * uses of some kinds of Collections. This is typically worthwhile
  * only when the collections are expected to be large, accessed by
@@ -210,22 +215,36 @@ import jdk.internal.vm.annotation.ReservedStackAccess;
  * and 65535 read locks. Attempts to exceed these limits result in
  * {@link Error} throws from locking methods.
  *
- * @since 1.5
  * @author Doug Lea
+ * @since 1.5
  */
 public class ReentrantReadWriteLock
         implements ReadWriteLock, java.io.Serializable {
     private static final long serialVersionUID = -6992448646407690164L;
-    /** Inner class providing readlock */
+    /**
+     * Inner class providing readlock
+     * <p>
+     * 内部类，读锁/共享锁
+     */
     private final ReentrantReadWriteLock.ReadLock readerLock;
-    /** Inner class providing writelock */
+    /**
+     * Inner class providing writelock
+     * <p>
+     * 内部类，写锁/排它锁/独占锁
+     */
     private final ReentrantReadWriteLock.WriteLock writerLock;
-    /** Performs all synchronization mechanics */
+    /**
+     * Performs all synchronization mechanics
+     * <p>
+     * 同步器
+     */
     final Sync sync;
 
     /**
      * Creates a new {@code ReentrantReadWriteLock} with
      * default (nonfair) ordering properties.
+     * <p>
+     * 构造方法，默认为非公平锁
      */
     public ReentrantReadWriteLock() {
         this(false);
@@ -234,6 +253,10 @@ public class ReentrantReadWriteLock
     /**
      * Creates a new {@code ReentrantReadWriteLock} with
      * the given fairness policy.
+     * <p>
+     * 构造方法，可指定公平或者非公平。
+     * true 表示 公平， false 非公平。
+     * 会同时创建写锁与读锁
      *
      * @param fair {@code true} if this lock should use a fair ordering policy
      */
@@ -243,12 +266,30 @@ public class ReentrantReadWriteLock
         writerLock = new WriteLock(this);
     }
 
-    public ReentrantReadWriteLock.WriteLock writeLock() { return writerLock; }
-    public ReentrantReadWriteLock.ReadLock  readLock()  { return readerLock; }
+    /**
+     * 返回写锁
+     *
+     * @return
+     */
+    public ReentrantReadWriteLock.WriteLock writeLock() {
+        return writerLock;
+    }
+
+    /**
+     * 返回读锁
+     *
+     * @return
+     */
+    public ReentrantReadWriteLock.ReadLock readLock() {
+        return readerLock;
+    }
 
     /**
      * Synchronization implementation for ReentrantReadWriteLock.
      * Subclassed into fair and nonfair versions.
+     * <p>
+     * 同步器抽象类，继承自 AbstractQueuedSynchronizer。
+     * 是否公平通过 writerShouldBlock 和 readerShouldBlock 来控制
      */
     abstract static class Sync extends AbstractQueuedSynchronizer {
         private static final long serialVersionUID = 6317671515068378041L;
@@ -256,25 +297,53 @@ public class ReentrantReadWriteLock
         /*
          * Read vs write count extraction constants and functions.
          * Lock state is logically divided into two unsigned shorts:
+         * 锁的状态在逻辑上将 state 分成无符号的两部分
          * The lower one representing the exclusive (writer) lock hold count,
+         * 低 16 位表示写锁（独占锁）的持有数
          * and the upper the shared (reader) hold count.
+         * 高 16 位表示读锁（共享锁）的持有数
          */
 
-        static final int SHARED_SHIFT   = 16;
-        static final int SHARED_UNIT    = (1 << SHARED_SHIFT);
-        static final int MAX_COUNT      = (1 << SHARED_SHIFT) - 1;
+        // 移位常量
+        static final int SHARED_SHIFT = 16;
+        // 相当于读锁中的 1
+        static final int SHARED_UNIT = (1 << SHARED_SHIFT);
+        // 持有锁的最大的数量
+        static final int MAX_COUNT = (1 << SHARED_SHIFT) - 1;
+        // 独占模式的掩码
+        // 低 16 位全是 1，高 16 位全是 0
         static final int EXCLUSIVE_MASK = (1 << SHARED_SHIFT) - 1;
 
-        /** Returns the number of shared holds represented in count. */
-        static int sharedCount(int c)    { return c >>> SHARED_SHIFT; }
-        /** Returns the number of exclusive holds represented in count. */
-        static int exclusiveCount(int c) { return c & EXCLUSIVE_MASK; }
+        /**
+         * Returns the number of shared holds represented in count.
+         * <p>
+         * 返回读锁持有的数量
+         */
+        static int sharedCount(int c) {
+            // 无符号右移
+            return c >>> SHARED_SHIFT;
+        }
+
+        /**
+         * Returns the number of exclusive holds represented in count.
+         * <p>
+         * 返回写锁持有的数量
+         */
+        static int exclusiveCount(int c) {
+            // 与上掩码
+            return c & EXCLUSIVE_MASK;
+        }
 
         /**
          * A counter for per-thread read hold counts.
          * Maintained as a ThreadLocal; cached in cachedHoldCounter.
+         * <p>
+         * 仅用于 读锁
+         * 静态类，保存一个计数器，由 ThreadLocal 维护。
+         * 保存每个线程持有的 读锁 的个数
          */
         static final class HoldCounter {
+            // 初始为 0
             int count;          // initially 0
             // Use id, not reference, to avoid garbage retention
             final long tid = LockSupport.getThreadId(Thread.currentThread());
@@ -283,9 +352,12 @@ public class ReentrantReadWriteLock
         /**
          * ThreadLocal subclass. Easiest to explicitly define for sake
          * of deserialization mechanics.
+         * <p>
+         * 静态类，继承了 ThreadLocal 类。里面保存 HoldCounter 对象。
+         * value 为 HoldCounter
          */
         static final class ThreadLocalHoldCounter
-            extends ThreadLocal<HoldCounter> {
+                extends ThreadLocal<HoldCounter> {
             public HoldCounter initialValue() {
                 return new HoldCounter();
             }
@@ -295,6 +367,9 @@ public class ReentrantReadWriteLock
          * The number of reentrant read locks held by current thread.
          * Initialized only in constructor and readObject.
          * Removed whenever a thread's read hold count drops to 0.
+         * <p>
+         * 当前线程持有的可重入 读锁 的锁的个数
+         * 只能通过 构造方法 和 反序列化初始化。
          */
         private transient ThreadLocalHoldCounter readHolds;
 
@@ -304,10 +379,14 @@ public class ReentrantReadWriteLock
          * where the next thread to release is the last one to
          * acquire. This is non-volatile since it is just used
          * as a heuristic, and would be great for threads to cache.
+         * <p>
+         * 最近成功获得读锁的线程持有的锁的个数。
          *
          * <p>Can outlive the Thread for which it is caching the read
          * hold count, but avoids garbage retention by not retaining a
          * reference to the Thread.
+         * <p>
+         * 该缓存能比 Thread 存活更长的时间。
          *
          * <p>Accessed via a benign data race; relies on the memory
          * model's final field and out-of-thin-air guarantees.
@@ -317,6 +396,9 @@ public class ReentrantReadWriteLock
         /**
          * firstReader is the first thread to have acquired the read lock.
          * firstReaderHoldCount is firstReader's hold count.
+         * <p>
+         * 持有读锁的队列中的第一个线程。第一个获取读锁的线程。
+         * 第一个读锁持有线程 持有的读锁的个数。
          *
          * <p>More precisely, firstReader is the unique thread that last
          * changed the shared count from 0 to 1, and has not released the
@@ -335,8 +417,14 @@ public class ReentrantReadWriteLock
         private transient Thread firstReader;
         private transient int firstReaderHoldCount;
 
+        /**
+         * 构造方法
+         */
         Sync() {
+            // 初始化当前线程的读锁计数器
             readHolds = new ThreadLocalHoldCounter();
+            // 设置 sync 的 state
+            // 在具体的实现类应该会重写下面的方法
             setState(getState()); // ensures visibility of readHolds
         }
 
@@ -348,8 +436,8 @@ public class ReentrantReadWriteLock
 
         /**
          * Returns true if the current thread, when trying to acquire
-         * the read lock, and otherwise eligible to do so, should block
-         * because of policy for overtaking other waiting threads.
+         * the read lock, and otherwise eligible 合格的/有资格的 to do so, should block
+         * because of policy for overtaking 超车/赶上 other waiting threads.
          */
         abstract boolean readerShouldBlock();
 
@@ -366,24 +454,45 @@ public class ReentrantReadWriteLock
          * both read and write holds that are all released during a
          * condition wait and re-established in tryAcquire.
          */
+
+        /**
+         * 释放独占锁
+         *
+         * @param releases
+         * @return
+         */
         @ReservedStackAccess
         protected final boolean tryRelease(int releases) {
+            // 锁是否被当前线程独占
             if (!isHeldExclusively())
                 throw new IllegalMonitorStateException();
+            // 释放之后的 state 值
             int nextc = getState() - releases;
+            // 如果写锁的计数为 0
             boolean free = exclusiveCount(nextc) == 0;
+            // 完全释放
             if (free)
+                // 设置独占线程为 null
                 setExclusiveOwnerThread(null);
+            // 更新 state
             setState(nextc);
+            // 返回是否完全释放
             return free;
         }
 
+        /**
+         * 获取独占锁
+         *
+         * @param acquires
+         * @return
+         */
         @ReservedStackAccess
         protected final boolean tryAcquire(int acquires) {
             /*
              * Walkthrough:
              * 1. If read count nonzero or write count nonzero
              *    and owner is a different thread, fail.
+             *    如果读锁计数或者写锁计数不为 0，且 owner 是不同的线程，则获取失败
              * 2. If count would saturate, fail. (This can only
              *    happen if count is already nonzero.)
              * 3. Otherwise, this thread is eligible for lock if
@@ -392,63 +501,112 @@ public class ReentrantReadWriteLock
              *    and set owner.
              */
             Thread current = Thread.currentThread();
+            // 没有具体意义，可以判断当前是否有锁
             int c = getState();
+            // 独占锁的个数
             int w = exclusiveCount(c);
+            // 如果当前有锁
             if (c != 0) {
                 // (Note: if c != 0 and w == 0 then shared count != 0)
+                // w == 0 表示写锁没被持有
+                // 当前线程不是持有锁的线程
                 if (w == 0 || current != getExclusiveOwnerThread())
+                    // 获取失败
                     return false;
+                // 检查独占锁个数是否超出限制
                 if (w + exclusiveCount(acquires) > MAX_COUNT)
+                    // 超出则抛出异常
                     throw new Error("Maximum lock count exceeded");
                 // Reentrant acquire
+                // 否则可重入获取
+                // 更新 state
                 setState(c + acquires);
+                // 获取成功
                 return true;
             }
+            // c == 0 说明锁未被持有
+            // 如果 写锁 需要阻塞 或者 cas 更新 state 失败
             if (writerShouldBlock() ||
-                !compareAndSetState(c, c + acquires))
+                    !compareAndSetState(c, c + acquires))
                 return false;
+            // 设置独占线程为当前线程
+            // 走到下面说明 state 更新成功了
             setExclusiveOwnerThread(current);
+            // 返回获取成功
             return true;
         }
 
+        /**
+         * 释放读锁
+         *
+         * @param unused
+         * @return
+         */
         @ReservedStackAccess
         protected final boolean tryReleaseShared(int unused) {
             Thread current = Thread.currentThread();
+            // 如果当前线程是最近获取读锁的线程
             if (firstReader == current) {
                 // assert firstReaderHoldCount > 0;
+                // 如果持有的读锁的个数 == 1
                 if (firstReaderHoldCount == 1)
+                    // 将 firstReader 置为 null
+                    // firstReaderHoldCount 怎么没处理 ？
                     firstReader = null;
                 else
+                    // firstReaderHoldCount - 1
                     firstReaderHoldCount--;
+                // 不是 firstReader
             } else {
+                // 获取当前线程的 HoldCounter
                 HoldCounter rh = cachedHoldCounter;
+                // 为初始化 HoldCounter
                 if (rh == null ||
-                    rh.tid != LockSupport.getThreadId(current))
+                        rh.tid != LockSupport.getThreadId(current))
+                    // 获取 HoldCounter
                     rh = readHolds.get();
+                // 获取计数值
                 int count = rh.count;
+                // 表明 可以移除该 HoldCounter 了
+                // 相当于该线程完全释放了读锁
                 if (count <= 1) {
+                    // 移除该 Entry
                     readHolds.remove();
+                    // 如果 count <= 0 的话，表明无法释放读锁
+                    // 出现了异常
                     if (count <= 0)
                         throw unmatchedUnlockException();
                 }
+                // count - 1
                 --rh.count;
             }
-            for (;;) {
+            for (; ; ) {
                 int c = getState();
+                // 读锁计数u - 1
                 int nextc = c - SHARED_UNIT;
+                // 更新新的 state
                 if (compareAndSetState(c, nextc))
                     // Releasing the read lock has no effect on readers,
+                    // 释放读锁对其他读线程没有影响
                     // but it may allow waiting writers to proceed if
+                    // 但是如果存在写锁在等待获取锁，那么读锁的释放就对写锁产生影响了
                     // both read and write locks are now free.
+                    // 返回是否完全释放了锁
                     return nextc == 0;
             }
         }
 
         private static IllegalMonitorStateException unmatchedUnlockException() {
             return new IllegalMonitorStateException(
-                "attempt to unlock read lock, not locked by current thread");
+                    "attempt to unlock read lock, not locked by current thread");
         }
 
+        /**
+         * 获取读锁
+         *
+         * @param unused
+         * @return
+         */
         @ReservedStackAccess
         protected final int tryAcquireShared(int unused) {
             /*
@@ -468,27 +626,45 @@ public class ReentrantReadWriteLock
              */
             Thread current = Thread.currentThread();
             int c = getState();
+            // 写锁被持有
+            // 持有锁的线程不是当前线程
+            // 说明持有写锁的线程可以在持有写锁的基础上获取读锁
             if (exclusiveCount(c) != 0 &&
-                getExclusiveOwnerThread() != current)
+                    getExclusiveOwnerThread() != current)
+                // 获取失败
                 return -1;
+            // 当前读锁的个数
             int r = sharedCount(c);
+            // 读不会被阻塞 && 读锁个数 < MAX_COUNT && 成功将 state + 1(这个 1 是读锁的单位 1 )
             if (!readerShouldBlock() &&
-                r < MAX_COUNT &&
-                compareAndSetState(c, c + SHARED_UNIT)) {
+                    r < MAX_COUNT &&
+                    compareAndSetState(c, c + SHARED_UNIT)) {
+                // 如果之前的读锁未被持有
                 if (r == 0) {
+                    // 将当前线程设置为第一个持有读锁的线程
                     firstReader = current;
+                    // 计数 + 1
                     firstReaderHoldCount = 1;
+                    // 如果当前线程是第一个获取读锁的线程
                 } else if (firstReader == current) {
+                    // firstReaderHoldCount + 1
                     firstReaderHoldCount++;
                 } else {
                     HoldCounter rh = cachedHoldCounter;
+                    // 如果 HoldCounter 未初始化 或者  rh 的 tid 不是当前线程的 tid
+                    // 为什么会不是当前线程的 tid？？
+                    // 因为可能是其他线程操作了 cachedHoldCounter
                     if (rh == null ||
-                        rh.tid != LockSupport.getThreadId(current))
+                            rh.tid != LockSupport.getThreadId(current))
+                        // 从 threadLocal 从获取，并赋值给 cachedHoldCounter
                         cachedHoldCounter = rh = readHolds.get();
                     else if (rh.count == 0)
+                        // 设置当前线程的 threadLocal
                         readHolds.set(rh);
+                    // 计数 ++
                     rh.count++;
                 }
+                // 返回表示获取成功
                 return 1;
             }
             return fullTryAcquireShared(current);
@@ -497,6 +673,8 @@ public class ReentrantReadWriteLock
         /**
          * Full version of acquire for reads, that handles CAS misses
          * and reentrant reads not dealt with in tryAcquireShared.
+         * <p>
+         * CAS 操作失败或者 tryAcquireShared 方法中可重入读未被处理的情况会调用该方法
          */
         final int fullTryAcquireShared(Thread current) {
             /*
@@ -506,44 +684,61 @@ public class ReentrantReadWriteLock
              * retries and lazily reading hold counts.
              */
             HoldCounter rh = null;
-            for (;;) {
+            for (; ; ) {
+                // 当前的 state
                 int c = getState();
+                // 如果被存在写锁
                 if (exclusiveCount(c) != 0) {
+                    // 如果不是当前线程占有，则返回 -1，表示失败
                     if (getExclusiveOwnerThread() != current)
                         return -1;
                     // else we hold the exclusive lock; blocking here
+                    // 否则 当前线程持有 写锁
                     // would cause deadlock.
+                    // 如果写锁需要阻塞
                 } else if (readerShouldBlock()) {
                     // Make sure we're not acquiring read lock reentrantly
+                    // 如果是读锁的重入，不处理
                     if (firstReader == current) {
                         // assert firstReaderHoldCount > 0;
                     } else {
                         if (rh == null) {
                             rh = cachedHoldCounter;
                             if (rh == null ||
-                                rh.tid != LockSupport.getThreadId(current)) {
+                                    rh.tid != LockSupport.getThreadId(current)) {
                                 rh = readHolds.get();
                                 if (rh.count == 0)
                                     readHolds.remove();
                             }
                         }
+                        // 如果 count == 0，说明不持有读锁
                         if (rh.count == 0)
                             return -1;
                     }
                 }
+                // 检查是否达到最大
                 if (sharedCount(c) == MAX_COUNT)
                     throw new Error("Maximum lock count exceeded");
+                // cas 尝试修改 state
+                // 如果成功
+                // if 里面更新 firstReader / firstReaderHoldCount / HoldCounter
                 if (compareAndSetState(c, c + SHARED_UNIT)) {
+                    // 如果读锁的个数为 0
+                    // 则将 firstReader 指向当前线程
+                    // 更新 firstReaderHoldCount 为 1
+                    // 但是为什么 sharedCount 的结果会是 0 呢?????
                     if (sharedCount(c) == 0) {
                         firstReader = current;
                         firstReaderHoldCount = 1;
                     } else if (firstReader == current) {
+                        // 仅 firstReaderHoldCount + 1
                         firstReaderHoldCount++;
+                        // 更新 该线程的 ThreadLocalMap
                     } else {
                         if (rh == null)
                             rh = cachedHoldCounter;
                         if (rh == null ||
-                            rh.tid != LockSupport.getThreadId(current))
+                                rh.tid != LockSupport.getThreadId(current))
                             rh = readHolds.get();
                         else if (rh.count == 0)
                             readHolds.set(rh);
@@ -559,21 +754,33 @@ public class ReentrantReadWriteLock
          * Performs tryLock for write, enabling barging in both modes.
          * This is identical in effect to tryAcquire except for lack
          * of calls to writerShouldBlock.
+         * <p>
+         * 尝试加写锁，允许抢占。
          */
         @ReservedStackAccess
         final boolean tryWriteLock() {
             Thread current = Thread.currentThread();
             int c = getState();
             if (c != 0) {
+                // 写锁的个数
                 int w = exclusiveCount(c);
+                // w == 0 表明锁未被持有
+                // current != getExclusiveOwnerThread() 表明当前线程被没有持有写锁
                 if (w == 0 || current != getExclusiveOwnerThread())
+                    // 直接返回 false
                     return false;
+                // 如果 写锁 个数已达最大
                 if (w == MAX_COUNT)
+                    // 抛异常
                     throw new Error("Maximum lock count exceeded");
             }
+            // 尝试更新 cas
             if (!compareAndSetState(c, c + 1))
+                // 未成功则返回 false
                 return false;
+            // 能到这里说明更新 state 成功，设置独占线程为当前线程
             setExclusiveOwnerThread(current);
+            // 返回获取锁成功
             return true;
         }
 
@@ -581,28 +788,42 @@ public class ReentrantReadWriteLock
          * Performs tryLock for read, enabling barging in both modes.
          * This is identical in effect to tryAcquireShared except for
          * lack of calls to readerShouldBlock.
+         * <p>
+         * 尝试加 读锁
          */
         @ReservedStackAccess
         final boolean tryReadLock() {
             Thread current = Thread.currentThread();
-            for (;;) {
+            for (; ; ) {
                 int c = getState();
+                // 如果有写锁 且 写锁的持有线程非当前线程
+                // 持有写锁的线程可以获取读锁
                 if (exclusiveCount(c) != 0 &&
-                    getExclusiveOwnerThread() != current)
+                        getExclusiveOwnerThread() != current)
                     return false;
+                // 读锁的个数
                 int r = sharedCount(c);
+                // 检查读锁个数是否达到最大
                 if (r == MAX_COUNT)
                     throw new Error("Maximum lock count exceeded");
+                // 尝试更新读锁的 state
                 if (compareAndSetState(c, c + SHARED_UNIT)) {
+                    // 如果读锁之前未被持有
                     if (r == 0) {
+                        // 更新 firstReader
+                        // 更新 firstReaderHoldCount
                         firstReader = current;
                         firstReaderHoldCount = 1;
+                        // 如果为当前线程
                     } else if (firstReader == current) {
+                        // 计数 + 1
                         firstReaderHoldCount++;
+                        // 一般处理
+                        // 更新当前线程的 HoldCounter，计数 + 1
                     } else {
                         HoldCounter rh = cachedHoldCounter;
                         if (rh == null ||
-                            rh.tid != LockSupport.getThreadId(current))
+                                rh.tid != LockSupport.getThreadId(current))
                             cachedHoldCounter = rh = readHolds.get();
                         else if (rh.count == 0)
                             readHolds.set(rh);
@@ -610,9 +831,15 @@ public class ReentrantReadWriteLock
                     }
                     return true;
                 }
+                // 更新失败竟然没有处理?????
             }
         }
 
+        /**
+         * 写锁是否被当前线程独占
+         *
+         * @return
+         */
         protected final boolean isHeldExclusively() {
             // While we must in general read state before owner,
             // we don't need to do so to check if current thread is owner
@@ -621,34 +848,69 @@ public class ReentrantReadWriteLock
 
         // Methods relayed to outer class
 
+        /**
+         * 条件
+         *
+         * @return
+         */
         final ConditionObject newCondition() {
             return new ConditionObject();
         }
 
+        /**
+         * 返回写锁的持有线程
+         *
+         * @return
+         */
         final Thread getOwner() {
             // Must read state before owner to ensure memory consistency
+            // 必须得先读 state，已保证内存一致性
+            // 是否存在写锁
             return ((exclusiveCount(getState()) == 0) ?
                     null :
+                    // 获取独占线程
                     getExclusiveOwnerThread());
         }
 
+        /**
+         * 返回读锁的个数
+         *
+         * @return
+         */
         final int getReadLockCount() {
             return sharedCount(getState());
         }
 
+        /**
+         * 返回写锁是否被持有
+         *
+         * @return
+         */
         final boolean isWriteLocked() {
             return exclusiveCount(getState()) != 0;
         }
 
+        /**
+         * 返回写锁的个数
+         * 如果当前线程不是持有写锁的线程，则会返回 0
+         *
+         * @return
+         */
         final int getWriteHoldCount() {
             return isHeldExclusively() ? exclusiveCount(getState()) : 0;
         }
 
+        /**
+         * 返回当前线程持有的读锁的个数
+         *
+         * @return
+         */
         final int getReadHoldCount() {
             if (getReadLockCount() == 0)
                 return 0;
 
             Thread current = Thread.currentThread();
+            // 如果是第一个持有读锁的线程
             if (firstReader == current)
                 return firstReaderHoldCount;
 
@@ -663,25 +925,52 @@ public class ReentrantReadWriteLock
 
         /**
          * Reconstitutes the instance from a stream (that is, deserializes it).
+         * <p>
+         * 反序列化方法
          */
         private void readObject(java.io.ObjectInputStream s)
-            throws java.io.IOException, ClassNotFoundException {
+                throws java.io.IOException, ClassNotFoundException {
             s.defaultReadObject();
+            // 在这里可以初始化 readHolds
             readHolds = new ThreadLocalHoldCounter();
             setState(0); // reset to unlocked state
         }
 
-        final int getCount() { return getState(); }
+        /**
+         * 返回 state 的个数，读锁 + 写锁
+         * getState 应该是被重写了的
+         *
+         * @return
+         */
+        final int getCount() {
+            return getState();
+        }
     }
 
     /**
      * Nonfair version of Sync
+     * <p>
+     * 非公平同步器
      */
     static final class NonfairSync extends Sync {
         private static final long serialVersionUID = -8159625535654395037L;
+
+        /**
+         * 重写了 writerShouldBlock 方法
+         *
+         * @return
+         */
         final boolean writerShouldBlock() {
+            // 直接返回 false
+            // 表明用于支持抢占
             return false; // writers can always barge
         }
+
+        /**
+         * 返回第一个节点是否为独占类型
+         *
+         * @return
+         */
         final boolean readerShouldBlock() {
             /* As a heuristic to avoid indefinite writer starvation,
              * block if the thread that momentarily appears to be head
@@ -696,12 +985,17 @@ public class ReentrantReadWriteLock
 
     /**
      * Fair version of Sync
+     * <p>
+     * 公平同步器
      */
     static final class FairSync extends Sync {
         private static final long serialVersionUID = -2274990926593161451L;
+
         final boolean writerShouldBlock() {
+            // 返回队列中是否有更待时间更久的线程
             return hasQueuedPredecessors();
         }
+
         final boolean readerShouldBlock() {
             return hasQueuedPredecessors();
         }
@@ -709,13 +1003,20 @@ public class ReentrantReadWriteLock
 
     /**
      * The lock returned by method {@link ReentrantReadWriteLock#readLock}.
+     * <p>
+     * 读锁的内部实现，实现了 Lock 接口。
      */
     public static class ReadLock implements Lock, java.io.Serializable {
         private static final long serialVersionUID = -5992448646407690164L;
+        /**
+         * 同步器
+         */
         private final Sync sync;
 
         /**
          * Constructor for use by subclasses.
+         * <p>
+         * 构造方法，指定同步器
          *
          * @param lock the outer lock object
          * @throws NullPointerException if the lock is null
@@ -726,13 +1027,19 @@ public class ReentrantReadWriteLock
 
         /**
          * Acquires the read lock.
+         * <p>
+         * 获取读锁
          *
          * <p>Acquires the read lock if the write lock is not held by
          * another thread and returns immediately.
+         * <p>
+         * 如果写锁未被其他线程持有，则立刻返回
          *
          * <p>If the write lock is held by another thread then
          * the current thread becomes disabled for thread scheduling
          * purposes and lies dormant until the read lock has been acquired.
+         * <p>
+         * 如果写锁被其他线程持有，那么当前线程会进入队列等待
          */
         public void lock() {
             sync.acquireShared(1);
@@ -741,21 +1048,29 @@ public class ReentrantReadWriteLock
         /**
          * Acquires the read lock unless the current thread is
          * {@linkplain Thread#interrupt interrupted}.
+         * <p>
+         * 获取读锁，除非当前线程被中断。可响应中断。
          *
          * <p>Acquires the read lock if the write lock is not held
          * by another thread and returns immediately.
+         * <p>
+         * 如果写锁未被其他线程持有，则立刻返回
          *
          * <p>If the write lock is held by another thread then the
          * current thread becomes disabled for thread scheduling
          * purposes and lies dormant until one of two things happens:
+         * <p>
+         * 如果写锁被其他线程持有，那么当前线程将会在队列中阻塞直到以下两种情况发生：
          *
          * <ul>
          *
          * <li>The read lock is acquired by the current thread; or
-         *
+         * <p>
+         * 1. 当前线程获取到了锁
          * <li>Some other thread {@linkplain Thread#interrupt interrupts}
          * the current thread.
-         *
+         * <p>
+         * 2. 其他线程中断可当前线程
          * </ul>
          *
          * <p>If the current thread:
@@ -763,14 +1078,19 @@ public class ReentrantReadWriteLock
          * <ul>
          *
          * <li>has its interrupted status set on entry to this method; or
-         *
+         * <p>
+         * 如果当前线程的中断状态在进入方法的时候就被设置了，或者
          * <li>is {@linkplain Thread#interrupt interrupted} while
          * acquiring the read lock,
+         * <p>
+         * 正在获取读锁的时候被设置了(acquire 方法中有检测是否中断)
          *
          * </ul>
-         *
+         * <p>
          * then {@link InterruptedException} is thrown and the current
          * thread's interrupted status is cleared.
+         * <p>
+         * 那么将会抛出 InterruptedException 异常。并且当前的中断标志会被清除。
          *
          * <p>In this implementation, as this method is an explicit
          * interruption point, preference is given to responding to
@@ -786,6 +1106,9 @@ public class ReentrantReadWriteLock
         /**
          * Acquires the read lock only if the write lock is not held by
          * another thread at the time of invocation.
+         * <p>
+         * 获取读锁，当且仅当写锁未被其他线程持有。
+         * 该方法即使是在 公平的策略下，也允许抢占。
          *
          * <p>Acquires the read lock if the write lock is not held by
          * another thread and returns immediately with the value
@@ -815,6 +1138,10 @@ public class ReentrantReadWriteLock
          * another thread within the given waiting time and the
          * current thread has not been {@linkplain Thread#interrupt
          * interrupted}.
+         * <p>
+         * 支持等待时间
+         * 与 {@link #tryLock()} 不同，该方法指定了时间，如果有其他线程在
+         * 等到锁，那么使用该方法的线程不会抢占。
          *
          * <p>Acquires the read lock if the write lock is not held by
          * another thread and returns immediately with the value
@@ -825,6 +1152,8 @@ public class ReentrantReadWriteLock
          * method. If you want a timed {@code tryLock} that does
          * permit barging on a fair lock then combine the timed and
          * un-timed forms together:
+         * <p>
+         * 使用如下的形式可以满足在指定时间内执行抢占
          *
          * <pre> {@code
          * if (lock.tryLock() ||
@@ -839,12 +1168,15 @@ public class ReentrantReadWriteLock
          * <ul>
          *
          * <li>The read lock is acquired by the current thread; or
-         *
+         * <p>
+         * 1. 获取到锁
          * <li>Some other thread {@linkplain Thread#interrupt interrupts}
          * the current thread; or
-         *
+         * <p>
+         * 2. 被其他线程中断
          * <li>The specified waiting time elapses.
-         *
+         * <p>
+         * 3. 等待超时
          * </ul>
          *
          * <p>If the read lock is acquired then the value {@code true} is
@@ -872,7 +1204,7 @@ public class ReentrantReadWriteLock
          * lock, and over reporting the elapse of the waiting time.
          *
          * @param timeout the time to wait for the read lock
-         * @param unit the time unit of the timeout argument
+         * @param unit    the time unit of the timeout argument
          * @return {@code true} if the read lock was acquired
          * @throws InterruptedException if the current thread is interrupted
          * @throws NullPointerException if the time unit is null
@@ -884,6 +1216,8 @@ public class ReentrantReadWriteLock
 
         /**
          * Attempts to release this lock.
+         * <p>
+         * 尝试释放读锁
          *
          * <p>If the number of readers is now zero then the lock
          * is made available for write lock attempts. If the current
@@ -891,7 +1225,7 @@ public class ReentrantReadWriteLock
          * IllegalMonitorStateException} is thrown.
          *
          * @throws IllegalMonitorStateException if the current thread
-         * does not hold this lock
+         *                                      does not hold this lock
          */
         public void unlock() {
             sync.releaseShared(1);
@@ -900,6 +1234,8 @@ public class ReentrantReadWriteLock
         /**
          * Throws {@code UnsupportedOperationException} because
          * {@code ReadLocks} do not support conditions.
+         * <p>
+         * 读锁不支持创建 Condition
          *
          * @throws UnsupportedOperationException always
          */
@@ -917,7 +1253,7 @@ public class ReentrantReadWriteLock
         public String toString() {
             int r = sync.getReadLockCount();
             return super.toString() +
-                "[Read locks = " + r + "]";
+                    "[Read locks = " + r + "]";
         }
     }
 
@@ -940,20 +1276,28 @@ public class ReentrantReadWriteLock
 
         /**
          * Acquires the write lock.
+         * <p>
+         * 获取写锁
          *
          * <p>Acquires the write lock if neither the read nor write lock
          * are held by another thread
          * and returns immediately, setting the write lock hold count to
          * one.
+         * <p>
+         * 当读写锁没有被其他线程持有时，获取写锁，并将锁持有数 + 1
          *
          * <p>If the current thread already holds the write lock then the
          * hold count is incremented by one and the method returns
          * immediately.
+         * <p>
+         * 如果当前线程早已经持有写锁，那么将会立刻返回，并计数 + 1
          *
          * <p>If the lock is held by another thread then the current
          * thread becomes disabled for thread scheduling purposes and
          * lies dormant until the write lock has been acquired, at which
          * time the write lock hold count is set to one.
+         * <p>
+         * 如果锁被其他线程持有，那么将会阻塞，直到获取到锁。
          */
         public void lock() {
             sync.acquire(1);
@@ -962,6 +1306,8 @@ public class ReentrantReadWriteLock
         /**
          * Acquires the write lock unless the current thread is
          * {@linkplain Thread#interrupt interrupted}.
+         * <p>
+         * 可响应中断
          *
          * <p>Acquires the write lock if neither the read nor write lock
          * are held by another thread
@@ -979,10 +1325,12 @@ public class ReentrantReadWriteLock
          * <ul>
          *
          * <li>The write lock is acquired by the current thread; or
-         *
+         * <p>
+         * 1. 当前线程获取到锁
          * <li>Some other thread {@linkplain Thread#interrupt interrupts}
          * the current thread.
-         *
+         * <p>
+         * 2. 其他线程中断了该线程
          * </ul>
          *
          * <p>If the write lock is acquired by the current thread then the
@@ -999,7 +1347,7 @@ public class ReentrantReadWriteLock
          * acquiring the write lock,
          *
          * </ul>
-         *
+         * <p>
          * then {@link InterruptedException} is thrown and the current
          * thread's interrupted status is cleared.
          *
@@ -1017,6 +1365,8 @@ public class ReentrantReadWriteLock
         /**
          * Acquires the write lock only if it is not held by another thread
          * at the time of invocation.
+         * <p>
+         * 破坏公平策略的获取锁方法
          *
          * <p>Acquires the write lock if neither the read nor write lock
          * are held by another thread
@@ -1080,11 +1430,15 @@ public class ReentrantReadWriteLock
          * <ul>
          *
          * <li>The write lock is acquired by the current thread; or
-         *
+         * <p>
+         * 1. 被当前线程获取到锁
          * <li>Some other thread {@linkplain Thread#interrupt interrupts}
          * the current thread; or
-         *
+         * <p>
+         * 2. 其他线程中断
          * <li>The specified waiting time elapses
+         * <p>
+         * 2. 超时
          *
          * </ul>
          *
@@ -1102,7 +1456,7 @@ public class ReentrantReadWriteLock
          * acquiring the write lock,
          *
          * </ul>
-         *
+         * <p>
          * then {@link InterruptedException} is thrown and the current
          * thread's interrupted status is cleared.
          *
@@ -1116,13 +1470,11 @@ public class ReentrantReadWriteLock
          * lock, and over reporting the elapse of the waiting time.
          *
          * @param timeout the time to wait for the write lock
-         * @param unit the time unit of the timeout argument
-         *
+         * @param unit    the time unit of the timeout argument
          * @return {@code true} if the lock was free and was acquired
          * by the current thread, or the write lock was already held by the
          * current thread; and {@code false} if the waiting time
          * elapsed before the lock could be acquired.
-         *
          * @throws InterruptedException if the current thread is interrupted
          * @throws NullPointerException if the time unit is null
          */
@@ -1133,6 +1485,8 @@ public class ReentrantReadWriteLock
 
         /**
          * Attempts to release this lock.
+         * <p>
+         * 尝试释放锁
          *
          * <p>If the current thread is the holder of this lock then
          * the hold count is decremented. If the hold count is now
@@ -1141,7 +1495,7 @@ public class ReentrantReadWriteLock
          * IllegalMonitorStateException} is thrown.
          *
          * @throws IllegalMonitorStateException if the current thread does not
-         * hold this lock
+         *                                      hold this lock
          */
         public void unlock() {
             sync.release(1);
@@ -1155,6 +1509,8 @@ public class ReentrantReadWriteLock
          * Object#wait() wait}, {@link Object#notify notify}, and {@link
          * Object#notifyAll notifyAll}) when used with the built-in
          * monitor lock.
+         * <p>
+         * 返回一个 Condition 实例。包含 condition queue
          *
          * <ul>
          *
@@ -1205,17 +1561,19 @@ public class ReentrantReadWriteLock
         public String toString() {
             Thread o = sync.getOwner();
             return super.toString() + ((o == null) ?
-                                       "[Unlocked]" :
-                                       "[Locked by thread " + o.getName() + "]");
+                    "[Unlocked]" :
+                    "[Locked by thread " + o.getName() + "]");
         }
 
         /**
          * Queries if this write lock is held by the current thread.
          * Identical in effect to {@link
          * ReentrantReadWriteLock#isWriteLockedByCurrentThread}.
+         * <p>
+         * 返回当前线程是否持有写锁
          *
          * @return {@code true} if the current thread holds this lock and
-         *         {@code false} otherwise
+         * {@code false} otherwise
          * @since 1.6
          */
         public boolean isHeldByCurrentThread() {
@@ -1227,9 +1585,11 @@ public class ReentrantReadWriteLock
          * thread.  A thread has a hold on a lock for each lock action
          * that is not matched by an unlock action.  Identical in effect
          * to {@link ReentrantReadWriteLock#getWriteHoldCount}.
+         * <p>
+         * 返回当前线程持有的 写锁 的个数
          *
          * @return the number of holds on this lock by the current thread,
-         *         or zero if this lock is not held by the current thread
+         * or zero if this lock is not held by the current thread
          * @since 1.6
          */
         public int getHoldCount() {
@@ -1241,6 +1601,8 @@ public class ReentrantReadWriteLock
 
     /**
      * Returns {@code true} if this lock has fairness set true.
+     * <p>
+     * 返回是否为公平锁
      *
      * @return {@code true} if this lock has fairness set true
      */
@@ -1258,6 +1620,8 @@ public class ReentrantReadWriteLock
      * This method is designed to facilitate construction of
      * subclasses that provide more extensive lock monitoring
      * facilities.
+     * <p>
+     * 返回当前锁的持有线程
      *
      * @return the owner, or {@code null} if not owned
      */
@@ -1269,6 +1633,9 @@ public class ReentrantReadWriteLock
      * Queries the number of read locks held for this lock. This
      * method is designed for use in monitoring system state, not for
      * synchronization control.
+     * <p>
+     * 返回读锁的个数
+     *
      * @return the number of read locks held
      */
     public int getReadLockCount() {
@@ -1279,9 +1646,11 @@ public class ReentrantReadWriteLock
      * Queries if the write lock is held by any thread. This method is
      * designed for use in monitoring system state, not for
      * synchronization control.
+     * <p>
+     * 返回写锁是否被其他线程持有
      *
      * @return {@code true} if any thread holds the write lock and
-     *         {@code false} otherwise
+     * {@code false} otherwise
      */
     public boolean isWriteLocked() {
         return sync.isWriteLocked();
@@ -1289,9 +1658,11 @@ public class ReentrantReadWriteLock
 
     /**
      * Queries if the write lock is held by the current thread.
+     * <p>
+     * 返回写锁是否被当前线程持有
      *
      * @return {@code true} if the current thread holds the write lock and
-     *         {@code false} otherwise
+     * {@code false} otherwise
      */
     public boolean isWriteLockedByCurrentThread() {
         return sync.isHeldExclusively();
@@ -1301,9 +1672,11 @@ public class ReentrantReadWriteLock
      * Queries the number of reentrant write holds on this lock by the
      * current thread.  A writer thread has a hold on a lock for
      * each lock action that is not matched by an unlock action.
+     * <p>
+     * 返回当前线程持有的写锁的个数
      *
      * @return the number of holds on the write lock by the current thread,
-     *         or zero if the write lock is not held by the current thread
+     * or zero if the write lock is not held by the current thread
      */
     public int getWriteHoldCount() {
         return sync.getWriteHoldCount();
@@ -1313,9 +1686,11 @@ public class ReentrantReadWriteLock
      * Queries the number of reentrant read holds on this lock by the
      * current thread.  A reader thread has a hold on a lock for
      * each lock action that is not matched by an unlock action.
+     * <p>
+     * 返回当前线程持有读锁的个数
      *
      * @return the number of holds on the read lock by the current thread,
-     *         or zero if the read lock is not held by the current thread
+     * or zero if the read lock is not held by the current thread
      * @since 1.6
      */
     public int getReadHoldCount() {
@@ -1330,6 +1705,8 @@ public class ReentrantReadWriteLock
      * returned collection are in no particular order.  This method is
      * designed to facilitate construction of subclasses that provide
      * more extensive lock monitoring facilities.
+     * <p>
+     * 返回等待写锁的所有线程的集合
      *
      * @return the collection of threads
      */
@@ -1345,6 +1722,8 @@ public class ReentrantReadWriteLock
      * returned collection are in no particular order.  This method is
      * designed to facilitate construction of subclasses that provide
      * more extensive lock monitoring facilities.
+     * <p>
+     * 返回当前等待读锁的多有线程的集合
      *
      * @return the collection of threads
      */
@@ -1358,9 +1737,11 @@ public class ReentrantReadWriteLock
      * time, a {@code true} return does not guarantee that any other
      * thread will ever acquire a lock.  This method is designed
      * primarily for use in monitoring of the system state.
+     * <p>
+     * 是否有线程在等待获取读锁或者写锁
      *
      * @return {@code true} if there may be other threads waiting to
-     *         acquire the lock
+     * acquire the lock
      */
     public final boolean hasQueuedThreads() {
         return sync.hasQueuedThreads();
@@ -1372,6 +1753,8 @@ public class ReentrantReadWriteLock
      * occur at any time, a {@code true} return does not guarantee
      * that this thread will ever acquire a lock.  This method is
      * designed primarily for use in monitoring of the system state.
+     * <p>
+     * 给定线程是否在等待读锁或者写锁
      *
      * @param thread the thread
      * @return {@code true} if the given thread is queued waiting for this lock
@@ -1388,6 +1771,8 @@ public class ReentrantReadWriteLock
      * method traverses internal data structures.  This method is
      * designed for use in monitoring system state, not for
      * synchronization control.
+     * <p>
+     * 返回等待队列的长度
      *
      * @return the estimated number of threads waiting for this lock
      */
@@ -1403,6 +1788,8 @@ public class ReentrantReadWriteLock
      * The elements of the returned collection are in no particular
      * order.  This method is designed to facilitate construction of
      * subclasses that provide more extensive monitoring facilities.
+     * <p>
+     * 返回等待队列的线程的集合
      *
      * @return the collection of threads
      */
@@ -1417,20 +1804,22 @@ public class ReentrantReadWriteLock
      * not guarantee that a future {@code signal} will awaken any
      * threads.  This method is designed primarily for use in
      * monitoring of the system state.
+     * <p>
+     * 返回写锁等待队列中是否存在在指定 Condition 上等待的线程
      *
      * @param condition the condition
      * @return {@code true} if there are any waiting threads
      * @throws IllegalMonitorStateException if this lock is not held
-     * @throws IllegalArgumentException if the given condition is
-     *         not associated with this lock
-     * @throws NullPointerException if the condition is null
+     * @throws IllegalArgumentException     if the given condition is
+     *                                      not associated with this lock
+     * @throws NullPointerException         if the condition is null
      */
     public boolean hasWaiters(Condition condition) {
         if (condition == null)
             throw new NullPointerException();
         if (!(condition instanceof AbstractQueuedSynchronizer.ConditionObject))
             throw new IllegalArgumentException("not owner");
-        return sync.hasWaiters((AbstractQueuedSynchronizer.ConditionObject)condition);
+        return sync.hasWaiters((AbstractQueuedSynchronizer.ConditionObject) condition);
     }
 
     /**
@@ -1440,20 +1829,22 @@ public class ReentrantReadWriteLock
      * serves only as an upper bound on the actual number of waiters.
      * This method is designed for use in monitoring of the system
      * state, not for synchronization control.
+     * <p>
+     * 返回写锁等待队列的长度
      *
      * @param condition the condition
      * @return the estimated number of waiting threads
      * @throws IllegalMonitorStateException if this lock is not held
-     * @throws IllegalArgumentException if the given condition is
-     *         not associated with this lock
-     * @throws NullPointerException if the condition is null
+     * @throws IllegalArgumentException     if the given condition is
+     *                                      not associated with this lock
+     * @throws NullPointerException         if the condition is null
      */
     public int getWaitQueueLength(Condition condition) {
         if (condition == null)
             throw new NullPointerException();
         if (!(condition instanceof AbstractQueuedSynchronizer.ConditionObject))
             throw new IllegalArgumentException("not owner");
-        return sync.getWaitQueueLength((AbstractQueuedSynchronizer.ConditionObject)condition);
+        return sync.getWaitQueueLength((AbstractQueuedSynchronizer.ConditionObject) condition);
     }
 
     /**
@@ -1465,20 +1856,22 @@ public class ReentrantReadWriteLock
      * are in no particular order.  This method is designed to
      * facilitate construction of subclasses that provide more
      * extensive condition monitoring facilities.
+     * <p>
+     * 返回写锁等待队列上的线程的集合
      *
      * @param condition the condition
      * @return the collection of threads
      * @throws IllegalMonitorStateException if this lock is not held
-     * @throws IllegalArgumentException if the given condition is
-     *         not associated with this lock
-     * @throws NullPointerException if the condition is null
+     * @throws IllegalArgumentException     if the given condition is
+     *                                      not associated with this lock
+     * @throws NullPointerException         if the condition is null
      */
     protected Collection<Thread> getWaitingThreads(Condition condition) {
         if (condition == null)
             throw new NullPointerException();
         if (!(condition instanceof AbstractQueuedSynchronizer.ConditionObject))
             throw new IllegalArgumentException("not owner");
-        return sync.getWaitingThreads((AbstractQueuedSynchronizer.ConditionObject)condition);
+        return sync.getWaitingThreads((AbstractQueuedSynchronizer.ConditionObject) condition);
     }
 
     /**
@@ -1496,7 +1889,7 @@ public class ReentrantReadWriteLock
         int r = Sync.sharedCount(c);
 
         return super.toString() +
-            "[Write locks = " + w + ", Read locks = " + r + "]";
+                "[Write locks = " + w + ", Read locks = " + r + "]";
     }
 
 }
