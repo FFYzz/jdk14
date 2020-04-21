@@ -251,7 +251,7 @@ public class LockSupport {
      * Disables the current thread for thread scheduling purposes, for up to
      * the specified waiting time, unless the permit is available.
      * <p>
-     * 阻塞等待时间
+     * 阻塞指定时间
      *
      * <p>If the specified waiting time is zero or negative, the
      * method does nothing. Otherwise, if the permit is available then
