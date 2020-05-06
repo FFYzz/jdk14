@@ -103,7 +103,7 @@ import java.util.concurrent.TimeUnit;
  *
  * </ul>
  *
- * <p>This class also supports methods that conditionally provide
+ * <p>This class also supports methods that conditionally 有条件地 provide
  * conversions across the three modes. For example, method {@link
  * #tryConvertToWriteLock} attempts to "upgrade" a mode, returning
  * a valid write stamp if (1) already in writing mode (2) in reading
@@ -365,12 +365,12 @@ public class StampedLock implements java.io.Serializable {
     /**
      * 读写掩码
      * ~ABITS = 11111111 11111111 11111111 11111111 11111111 11111111 11111111 00000000
-     * 00000000 00000000 00000000 00000000 00000000 00000000 00000000 11111111
+     * ABITS  = 00000000 00000000 00000000 00000000 00000000 00000000 00000000 11111111
      * = 255
      */
     private static final long ABITS = RBITS | WBIT;
     /**
-     * Stamp BITS
+     * Stamp BITS 与乐观锁相关的常量
      * 读计数掩码取反
      * 11111111 11111111 11111111 11111111 11111111 11111111 11111111 10000000 补码
      * = -128
@@ -378,8 +378,9 @@ public class StampedLock implements java.io.Serializable {
     private static final long SBITS = ~RBITS; // note overlap with ABITS
     // not writing and conservatively non-overflowing
     /**
-     * (3L << (LG_READERS - 1)) = 00000000 00000000 00000000 00000000 00000000 00000000 00000000 11000000
+     * (3L << (LG_READERS - 1)) =  00000000 00000000 00000000 00000000 00000000 00000000 00000000 11000000
      * ~(3L << (LG_READERS - 1)) = 11111111 11111111 11111111 11111111 11111111 11111111 11111111 00111111
+     * 从这里可以看出，reader 的计数要小于等于 00111111 时，reader 的计数才算在安全范围内。
      * = -193
      * 在修改读的 state 的时候用来确保读的计数没有超出范围
      */
@@ -467,16 +468,16 @@ public class StampedLock implements java.io.Serializable {
     }
 
     /**
-     * 读节点
+     * 写节点
      */
     static final class WriterNode extends Node { // node for writers
     }
 
     /**
-     * 写节点
+     * 读节点
      */
     static final class ReaderNode extends Node { // node for readers
-        // 是一个单向链表
+        // 是一个 stack
         volatile ReaderNode cowaiters;           // list of linked readers
 
         final boolean casCowaiters(ReaderNode c, ReaderNode v) {
@@ -545,6 +546,7 @@ public class StampedLock implements java.io.Serializable {
         for (long s, m, nextState; ; ) {
             // 当前未获取 write 且 读的计数小于 RFULL
             if ((m = (s = state) & ABITS) < RFULL) {
+                // 最大能将 state 修改成 RFULL
                 if (casState(s, nextState = s + RUNIT))
                     return nextState;
                 // 如果当前的 state 为写状态
@@ -581,6 +583,7 @@ public class StampedLock implements java.io.Serializable {
      * until available.
      *
      * @return a write stamp that can be used to unlock or convert mode
+     * 返回一个 long 类型的 stamp，该 stamp 可用于 unlock 或者将 write lock 转成其他 mode
      */
     @ReservedStackAccess
     public long writeLock() {
@@ -714,6 +717,7 @@ public class StampedLock implements java.io.Serializable {
             if (nanos <= 0L)
                 return 0L;
             nextState = acquireRead(true, true, System.nanoTime() + nanos);
+            //检查返回是否中断
             if (nextState != INTERRUPTED)
                 return nextState;
         }
@@ -835,8 +839,10 @@ public class StampedLock implements java.io.Serializable {
      *                                      not match the current state of this lock
      */
     public void unlock(long stamp) {
+        // 如果持有写锁
         if ((stamp & WBIT) != 0L)
             unlockWrite(stamp);
+            // 如果持有读锁
         else
             unlockRead(stamp);
     }
@@ -856,9 +862,11 @@ public class StampedLock implements java.io.Serializable {
     public long tryConvertToWriteLock(long stamp) {
         long a = stamp & ABITS, m, s, nextState;
         // 当验证通过
+        // 使用 while 的原因是避免运行过程中的并发修改造成的影响
         while (((s = state) & SBITS) == (stamp & SBITS)) {
-            // 无锁
+            // 无锁，直接加写锁
             if ((m = s & ABITS) == 0L) {
+                // 如果有锁
                 if (a != 0L)
                     // 直接返回
                     break;
@@ -869,10 +877,11 @@ public class StampedLock implements java.io.Serializable {
                 }
                 // 如果是写锁，直接返回
             } else if (m == WBIT) {
+                // 并发修改了 state，可能会出现 a != m 的情况
                 if (a != m)
                     break;
                 return stamp;
-                // 如果是读锁
+                // 如果仅有一个线程持有读锁
             } else if (m == RUNIT && a != 0L) {
                 // 转为写锁
                 if (casState(s, nextState = s - RUNIT + WBIT))
@@ -938,23 +947,32 @@ public class StampedLock implements java.io.Serializable {
         U.loadFence();
         // match
         while (((s = state) & SBITS) == (stamp & SBITS)) {
+            // 如果持有写锁
             if ((a = stamp & ABITS) >= WBIT) {
                 if (s != stamp)   // write stamp
                     break;
+                // 释放写锁
                 return releaseWrite(s);
+                // 如果本来就是乐观读的 stamp
             } else if (a == 0L) { // already an optimistic read stamp
+                // 直接返回
                 return stamp;
+                // 是一个无效的读锁 stamp
             } else if ((m = s & ABITS) == 0L) { // invalid read stamp
+                // 转换失败
                 break;
+                // 未越界读锁的 stamp
             } else if (m < RFULL) {
                 // 释放读锁
                 if (casState(s, nextState = s - RUNIT)) {
                     if (m == RUNIT)
                         signalNext(head);
+                    // 返回一个释放读锁之后的 乐观读 stamp
                     return nextState & SBITS;
                 }
                 // 释放越界读锁
             } else if ((nextState = tryDecReaderOverflow(s)) != 0L)
+                // 返回一个越界之后的乐观读的 stamp
                 return nextState & SBITS;
         }
         return 0L;
@@ -1012,6 +1030,7 @@ public class StampedLock implements java.io.Serializable {
      */
     private int getReadLockCount(long s) {
         long readers;
+        // state & 读锁的掩码
         if ((readers = s & RBITS) >= RFULL)
             readers = RFULL + readerOverflow;
         return (int) readers;
@@ -1023,6 +1042,7 @@ public class StampedLock implements java.io.Serializable {
      * @return {@code true} if the lock is currently held exclusively
      */
     public boolean isWriteLocked() {
+        // 返回当前锁状态是否为持有写锁
         return (state & WBIT) != 0L;
     }
 
@@ -1032,6 +1052,7 @@ public class StampedLock implements java.io.Serializable {
      * @return {@code true} if the lock is currently held non-exclusively
      */
     public boolean isReadLocked() {
+        // 返回当前的锁状态是否为持有读锁
         return (state & RBITS) != 0L;
     }
 
@@ -1104,6 +1125,7 @@ public class StampedLock implements java.io.Serializable {
      * @since 10
      */
     public static boolean isLockStamp(long stamp) {
+        // 返回 stamp 是否代表持有锁
         return (stamp & ABITS) != 0L;
     }
 
@@ -1118,6 +1140,7 @@ public class StampedLock implements java.io.Serializable {
      * @since 10
      */
     public static boolean isOptimisticReadStamp(long stamp) {
+        // 返回 stamp 是否代表一个乐观读锁
         return (stamp & ABITS) == 0L && stamp != 0L;
     }
 
@@ -1293,7 +1316,7 @@ public class StampedLock implements java.io.Serializable {
             if (m < RFULL) {
                 if (casState(s, s - RUNIT)) {
                     if (m == RUNIT)
-                        // 注意这里将 state 减到 1 之后才会去 signalNext
+                        // 如果读锁已经全部释放，需要唤醒写锁等待队列中的等待节点。
                         signalNext(head);
                     return;
                 }
@@ -1381,7 +1404,7 @@ public class StampedLock implements java.io.Serializable {
     private static void signalCowaiters(ReaderNode node) {
         if (node != null) {
             for (ReaderNode c; (c = node.cowaiters) != null; ) {
-                // 从 cowaiters 链表中移除 c
+                // 从 cowaiters stack 中移除 c
                 if (node.casCowaiters(c, c.cowaiters))
                     // 将 c 绑定的线程进行唤醒
                     LockSupport.unpark(c.waiter);
@@ -1431,11 +1454,16 @@ public class StampedLock implements java.io.Serializable {
                     cleanQueue();           // predecessor cancelled
                     continue;
                     // 成为了 head 节点
+                    // 并发修改的情况下才会出现，因为前面已经检查了 pred 节点不会是 head 节点
                 } else if (pred.prev == null) {
                     Thread.onSpinWait();    // ensure serialization
                     continue;
                 }
             }
+            // pred 是 head 节点 或者 node 节点还未入队
+            // && 锁未被持有
+            // && 成功将锁的状态更新为 s | WBIT
+            // 表示获取写锁成功
             if ((first || pred == null) && ((s = state) & ABITS) == 0L &&
                     casState(s, nextState = s | WBIT)) {
                 // 进入这里表示获取 write lock 成功
@@ -1525,9 +1553,10 @@ public class StampedLock implements java.io.Serializable {
             ReaderNode leader;
             long nextState;
             Node tailPred = null, t = tail;
-            // 队列为空，调用 tryAcquireRead 尝试获取
+            // 队列未初始化或者队列中只有一个 head 节点，调用 tryAcquireRead 尝试获取
             if ((t == null || (tailPred = t.prev) == null) &&
                     (nextState = tryAcquireRead()) != 0L) // try now if empty
+                // 获取成功则直接返回
                 return nextState;
                 // 初始化队列
             else if (t == null)
@@ -1539,6 +1568,8 @@ public class StampedLock implements java.io.Serializable {
                     // 初始化 node 节点
                     node = new ReaderNode();
                 // 加入队尾
+                // 成为了一个 leader 节点
+                // 跳出循环
                 if (tail == t) {
                     node.setPrevRelaxed(t);
                     if (casTail(t, node)) {
@@ -1549,6 +1580,7 @@ public class StampedLock implements java.io.Serializable {
                     node.setPrevRelaxed(null);
                 }
                 // 如果队尾是 ReaderNode 类型节点
+                // 说明当前要入队的 ReaderNode 不会成为 leader 节点，需要在 cowaiters 链表中等待。
             } else if ((leader = (ReaderNode) t) == tail) { // try to cowait
                 for (boolean attached = false; ; ) {
                     // leader 被 cancelled 或者 leader 为 head 节点
@@ -1562,18 +1594,29 @@ public class StampedLock implements java.io.Serializable {
                     else if (node.waiter == null)
                         node.waiter = Thread.currentThread();
                         // 将 leader 的 cowaiters 指向新加入的 node，将 node 的 cowaiters 指向 leader 原来的 cowaiters
+                        // 这里可以理解为是一个 stack。尾结点维护的 stack
                     else if (!attached) {
+                        // 尾结点连接的第一个 ReaderNode
                         ReaderNode c = leader.cowaiters;
+                        // 将新加入的 node 的 cowaiters 引用指向 尾结点原来指向的 cowaiters
                         node.setCowaitersRelaxed(c);
+                        // 是否 attached 成功看能否将 leader 的 cowaiters 引用指向新加入的 node
                         attached = leader.casCowaiters(c, node);
+                        // 如果没有 attach 成功， back up
                         if (!attached)
                             node.setCowaitersRelaxed(null);
+                        // 已经 attached 了
                     } else {
                         long nanos = 0L;
+                        // 未设置超时时间
                         if (!timed)
+                            // 直接 park
                             LockSupport.park(this);
+                            // 若设置了超时时间
                         else if ((nanos = time - System.nanoTime()) > 0L)
+                            // park 指定的时间
                             LockSupport.parkNanos(this, nanos);
+                        // 检查中断
                         interrupted |= Thread.interrupted();
                         // 如果支持中断且被中断 或者 超时
                         if ((interrupted && interruptible) ||
@@ -1582,14 +1625,28 @@ public class StampedLock implements java.io.Serializable {
                             return cancelCowaiter(node, leader, interrupted);
                     }
                 }
+                // 能走到这一步说明 leader 节点被取消了或者 leader 节点成为了 head 节点。
+                // 如果 leader 节点被取消了，那么在 cancelAcquire 的时候还有一个动作就是将 leader 节点后续的 cowaiters
+                // 全部唤醒，尝试获取动作。
+                // 如果 leader 节点成为了 head 节点，那么同样会唤醒所有的后续节点，进行尝试获取。
+                // 成为 head 节点说明能获取锁了
                 if (node != null)
+                    // 将 node 节点的绑定线程置为 null
                     node.waiter = null;
+                // 尝试获取
                 long ns = tryAcquireRead();
+                // 唤醒 FILO 队列中的所有节点
+                // 如果 leader 节点被取消，那么 leader 节点的 Cowaiters == null，因为已经唤醒过一次了
+                // 如果 leader 节点成为了 head 节点，那么需要全都唤醒一次
                 signalCowaiters(leader);
+                // 检查中断
                 if (interrupted)
                     Thread.currentThread().interrupt();
+                // 如果获取成功
                 if (ns != 0L)
+                    // 则返回获取成功之后的 state
                     return ns;
+                    // 如果获取失败，则将 node 置为 null.
                 else
                     node = null; // restart if stale, missed, or leader cancelled
             }
@@ -1623,6 +1680,7 @@ public class StampedLock implements java.io.Serializable {
                     node.waiter = null;
                 }
                 // 唤醒 node 的 cowaiters
+                // 因为排着队的都是 ReaderNode，所以需要全部都唤醒
                 signalCowaiters(node);
                 if (interrupted)
                     Thread.currentThread().interrupt();
@@ -1660,8 +1718,6 @@ public class StampedLock implements java.io.Serializable {
      * Possibly repeatedly traverses from tail, unsplicing cancelled
      * nodes until none are found. Unparks nodes that may have been
      * relinked to be next eligible acquirer.
-     * <p>
-     * 只处理一个 cancelled 节点
      */
     private void cleanQueue() {
         for (; ; ) {                               // restart point
@@ -1677,7 +1733,7 @@ public class StampedLock implements java.io.Serializable {
                 if (s == null ? tail != q : (s.prev != q || s.status < 0))
                     // 已被其他线程处理
                     break;                       // inconsistent
-                // 节点 q 被取消，找到了 cancelled 的节点，处理完就退出
+                // 节点 q 被取消，找到了 cancelled 的节点，处理完就跳出当前循环，从 tail 开始继续找
                 if (q.status < 0) {              // cancelled
                     // 判断当前节点是否为 tail 节点，如果是的话，则更新 tail，如果不是的话则更新后继节点的 pre 指向
                     if ((s == null ? casTail(q, p) : s.casPrev(q, p)) &&
@@ -1709,10 +1765,11 @@ public class StampedLock implements java.io.Serializable {
      * If leader exists, possibly repeatedly traverses cowaiters,
      * unsplicing the given cancelled node until not found.
      * <p>
-     * 将 node 从 cowaiter 链表中删去
+     * 将 node 从 cowaiter stack 中删去
      */
     private void unlinkCowaiter(ReaderNode node, ReaderNode leader) {
         if (leader != null) {
+            // leader 节点要确保不是 head 节点且 leader 未被 cancelled
             while (leader.prev != null && leader.status >= 0) {
                 // 往后找
                 for (ReaderNode p = leader, q; ; p = q) {
@@ -1745,6 +1802,8 @@ public class StampedLock implements java.io.Serializable {
             cleanQueue();
             // 如果是 ReaderNode，还需额外处理
             if (node instanceof ReaderNode)
+                // 如果是 ReaderNode 节点，可能后面跟着一串 ReaderNode 节点
+                // 当前的取消了，需要唤醒后续的节点
                 signalCowaiters((ReaderNode) node);
         }
         // 返回是否是中断取消
