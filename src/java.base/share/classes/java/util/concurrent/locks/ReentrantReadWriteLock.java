@@ -380,7 +380,8 @@ public class ReentrantReadWriteLock
          * acquire. This is non-volatile since it is just used
          * as a heuristic, and would be great for threads to cache.
          * <p>
-         * 最近成功获得读锁的线程持有的锁的个数。
+         * 最后一个成功获取到读锁的线程的 ThreadLocalHoldCounter 中 value 的缓存
+         * 最后一个成功获得读锁的线程持有的锁的个数。
          *
          * <p>Can outlive the Thread for which it is caching the read
          * hold count, but avoids garbage retention by not retaining a
@@ -435,6 +436,8 @@ public class ReentrantReadWriteLock
          */
 
         /**
+         * 是否能够抢占
+         * <p>
          * Returns true if the current thread, when trying to acquire
          * the read lock, and otherwise eligible 合格的/有资格的 to do so, should block
          * because of policy for overtaking 超车/赶上 other waiting threads.
@@ -442,6 +445,8 @@ public class ReentrantReadWriteLock
         abstract boolean readerShouldBlock();
 
         /**
+         * 是否能够抢占
+         * <p>
          * Returns true if the current thread, when trying to acquire
          * the write lock, and otherwise eligible to do so, should block
          * because of policy for overtaking other waiting threads.
@@ -545,22 +550,25 @@ public class ReentrantReadWriteLock
         @ReservedStackAccess
         protected final boolean tryReleaseShared(int unused) {
             Thread current = Thread.currentThread();
-            // 如果当前线程是最近获取读锁的线程
+            // 如果当前线程是第一个获取读锁的线程
             if (firstReader == current) {
                 // assert firstReaderHoldCount > 0;
                 // 如果持有的读锁的个数 == 1
                 if (firstReaderHoldCount == 1)
                     // 将 firstReader 置为 null
                     // firstReaderHoldCount 怎么没处理 ？
+                    // 不用处理，只要把 firstReader 置为 null 就可以了，因为优先使用 firstReader
                     firstReader = null;
                 else
                     // firstReaderHoldCount - 1
                     firstReaderHoldCount--;
                 // 不是 firstReader
             } else {
-                // 获取当前线程的 HoldCounter
+                // 暂时将缓存的 cachedHoldCounter 赋值给 rh
                 HoldCounter rh = cachedHoldCounter;
                 // 为初始化 HoldCounter
+                // 如果缓存的 cachedHoldCounter 为空或者 当前线程不是最后一个获取读锁的线程
+                // 则需要从当前线程的 readHolds 中获取。
                 if (rh == null ||
                         rh.tid != LockSupport.getThreadId(current))
                     // 获取 HoldCounter
@@ -641,22 +649,23 @@ public class ReentrantReadWriteLock
                     compareAndSetState(c, c + SHARED_UNIT)) {
                 // 如果之前的读锁未被持有
                 if (r == 0) {
-                    // 将当前线程设置为第一个持有读锁的线程
+                    // 将当前线程设成第一个线程
                     firstReader = current;
                     // 计数 + 1
                     firstReaderHoldCount = 1;
                     // 如果当前线程是第一个获取读锁的线程
                 } else if (firstReader == current) {
-                    // firstReaderHoldCount + 1
+                    // 计数 + 1
                     firstReaderHoldCount++;
                 } else {
+                    // 否则更新 ThreadLocalHoldCounter
+                    // 同样先尝试检查当前线程是否是最后一个获取到读锁的线程，
                     HoldCounter rh = cachedHoldCounter;
                     // 如果 HoldCounter 未初始化 或者  rh 的 tid 不是当前线程的 tid
-                    // 为什么会不是当前线程的 tid？？
-                    // 因为可能是其他线程操作了 cachedHoldCounter
                     if (rh == null ||
                             rh.tid != LockSupport.getThreadId(current))
                         // 从 threadLocal 从获取，并赋值给 cachedHoldCounter
+                        // 更新 cachedHoldCounter
                         cachedHoldCounter = rh = readHolds.get();
                     else if (rh.count == 0)
                         // 设置当前线程的 threadLocal
@@ -693,30 +702,38 @@ public class ReentrantReadWriteLock
                     if (getExclusiveOwnerThread() != current)
                         return -1;
                     // else we hold the exclusive lock; blocking here
-                    // 否则 当前线程持有 写锁
                     // would cause deadlock.
-                    // 如果写锁需要阻塞
+                    // 否则说明当前线程持有写锁，到后面处理。
+                    // 公平锁下：队列中是否有其他线程
+                    // 非公平锁下：队列的第一个节点是否是独占节点
                 } else if (readerShouldBlock()) {
                     // Make sure we're not acquiring read lock reentrantly
-                    // 如果是读锁的重入，不处理
+                    // 下面是重入逻辑
                     if (firstReader == current) {
+                        // 如果当前线程就是 firstReader，那么就是重入。
                         // assert firstReaderHoldCount > 0;
                     } else {
+                        // 不是第一个获取到读锁的线程
+                        // 也有可能 firstReader == null，说明没有获取到读锁的线程存在。
                         if (rh == null) {
+                            // 检查是否是最后一个获取到读锁的线程
                             rh = cachedHoldCounter;
+                            // 如果不是
                             if (rh == null ||
                                     rh.tid != LockSupport.getThreadId(current)) {
+                                // 初始化一个
                                 rh = readHolds.get();
+                                // 如果未持有 读锁，则 remove
                                 if (rh.count == 0)
                                     readHolds.remove();
                             }
                         }
-                        // 如果 count == 0，说明不持有读锁
+                        // 如果 count == 0，说明不持有读锁，无法重入，需要到队列中等待获取锁
                         if (rh.count == 0)
                             return -1;
                     }
                 }
-                // 检查是否达到最大
+                // 检查读锁个数是否达到最大
                 if (sharedCount(c) == MAX_COUNT)
                     throw new Error("Maximum lock count exceeded");
                 // cas 尝试修改 state
@@ -726,14 +743,13 @@ public class ReentrantReadWriteLock
                     // 如果读锁的个数为 0
                     // 则将 firstReader 指向当前线程
                     // 更新 firstReaderHoldCount 为 1
-                    // 但是为什么 sharedCount 的结果会是 0 呢?????
                     if (sharedCount(c) == 0) {
                         firstReader = current;
                         firstReaderHoldCount = 1;
+                        // 如果当前线程就是第一个获取读锁的线程
                     } else if (firstReader == current) {
-                        // 仅 firstReaderHoldCount + 1
+                        // 计数 ++
                         firstReaderHoldCount++;
-                        // 更新 该线程的 ThreadLocalMap
                     } else {
                         if (rh == null)
                             rh = cachedHoldCounter;
@@ -849,7 +865,7 @@ public class ReentrantReadWriteLock
         // Methods relayed to outer class
 
         /**
-         * 条件
+         * 条件等待队列
          *
          * @return
          */
@@ -1615,13 +1631,13 @@ public class ReentrantReadWriteLock
      * {@code null} if not owned. When this method is called by a
      * thread that is not the owner, the return value reflects a
      * best-effort approximation of current lock status. For example,
-     * the owner may be momentarily {@code null} even if there are
+     * the owner may be momentarily 暂时地 {@code null} even if there are
      * threads trying to acquire the lock but have not yet done so.
      * This method is designed to facilitate construction of
      * subclasses that provide more extensive lock monitoring
      * facilities.
      * <p>
-     * 返回当前锁的持有线程
+     * 返回当前写锁的持有线程
      *
      * @return the owner, or {@code null} if not owned
      */
@@ -1772,7 +1788,7 @@ public class ReentrantReadWriteLock
      * designed for use in monitoring system state, not for
      * synchronization control.
      * <p>
-     * 返回等待队列的长度
+     * 返回等待队列的长度，无论队列中的读锁或者写锁。
      *
      * @return the estimated number of threads waiting for this lock
      */

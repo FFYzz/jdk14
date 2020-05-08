@@ -38,7 +38,7 @@ package java.util.concurrent.locks;
 /**
  * A {@code ReadWriteLock} maintains a pair of associated {@link
  * Lock locks}, one for read-only operations and one for writing.
- * The {@linkplain #readLock read lock} may be held simultaneously
+ * The {@linkplain #readLock read lock} may be held simultaneously 同时地
  * by multiple reader threads, so long as there are no writers.
  * The {@linkplain #writeLock write lock} is exclusive.
  *
@@ -51,10 +51,11 @@ package java.util.concurrent.locks;
  *
  * <p>A read-write lock allows for a greater level of concurrency in
  * accessing shared data than that permitted by a mutual exclusion lock.
- * It exploits the fact that while only a single thread at a time (a
+ * It exploits 利用 the fact that while only a single thread at a time (a
  * <em>writer</em> thread) can modify the shared data, in many cases any
  * number of threads can concurrently read the data (hence <em>reader</em>
  * threads).
+ * 读锁写少的场景 read-write lock 具有更高的并发能力
  * In theory, the increase in concurrency permitted by the use of a read-write
  * lock will lead to performance improvements over the use of a mutual
  * exclusion lock. In practice this increase in concurrency will only be fully
