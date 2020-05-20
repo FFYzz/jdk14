@@ -37,15 +37,15 @@ import java.util.Objects;
  * <p> Applications that need to define a subclass of {@code InputStream}
  * must always provide a method that returns the next byte of input.
  *
- * @author  Arthur van Hoff
- * @see     java.io.BufferedInputStream
- * @see     java.io.ByteArrayInputStream
- * @see     java.io.DataInputStream
- * @see     java.io.FilterInputStream
- * @see     java.io.InputStream#read()
- * @see     java.io.OutputStream
- * @see     java.io.PushbackInputStream
- * @since   1.0
+ * @author Arthur van Hoff
+ * @see java.io.BufferedInputStream
+ * @see java.io.ByteArrayInputStream
+ * @see java.io.DataInputStream
+ * @see java.io.FilterInputStream
+ * @see java.io.InputStream#read()
+ * @see java.io.OutputStream
+ * @see java.io.PushbackInputStream
+ * @since 1.0
  */
 public abstract class InputStream implements Closeable {
 
@@ -58,9 +58,12 @@ public abstract class InputStream implements Closeable {
     /**
      * Constructor for subclasses to call.
      */
-    public InputStream() {}
+    public InputStream() {
+    }
 
     /**
+     * 一种 Null Object pattern 的实现
+     * <p>
      * Returns a new {@code InputStream} that reads no bytes. The returned
      * stream is initially open.  The stream is closed by calling the
      * {@code close()} method.  Subsequent calls to {@code close()} have no
@@ -79,7 +82,6 @@ public abstract class InputStream implements Closeable {
      * throws {@code IOException}.
      *
      * @return an {@code InputStream} which contains no bytes
-     *
      * @since 11
      */
     public static InputStream nullInputStream() {
@@ -93,7 +95,7 @@ public abstract class InputStream implements Closeable {
             }
 
             @Override
-            public int available () throws IOException {
+            public int available() throws IOException {
                 ensureOpen();
                 return 0;
             }
@@ -122,7 +124,7 @@ public abstract class InputStream implements Closeable {
 
             @Override
             public int readNBytes(byte[] b, int off, int len)
-                throws IOException {
+                    throws IOException {
                 Objects.checkFromIndexSize(off, len, b.length);
                 ensureOpen();
                 return 0;
@@ -166,6 +168,9 @@ public abstract class InputStream implements Closeable {
     }
 
     /**
+     * 一次读取一个 byte 的数据，每次返回一个 int 类型的值，但是该 int 值的范围为 0->255.
+     * 如果读取不到数据，返回 -1.
+     * <p>
      * Reads the next byte of data from the input stream. The value byte is
      * returned as an {@code int} in the range {@code 0} to
      * {@code 255}. If no byte is available because the end of the stream
@@ -175,13 +180,15 @@ public abstract class InputStream implements Closeable {
      *
      * <p> A subclass must provide an implementation of this method.
      *
-     * @return     the next byte of data, or {@code -1} if the end of the
-     *             stream is reached.
-     * @throws     IOException  if an I/O error occurs.
+     * @return the next byte of data, or {@code -1} if the end of the
+     * stream is reached.
+     * @throws IOException if an I/O error occurs.
      */
     public abstract int read() throws IOException;
 
     /**
+     * 最多读取数组 b 的长度个 byte 数据
+     * <p>
      * Reads some number of bytes from the input stream and stores them into
      * the buffer array {@code b}. The number of bytes actually read is
      * returned as an integer.  This method blocks until input data is
@@ -204,21 +211,23 @@ public abstract class InputStream implements Closeable {
      * <p> The {@code read(b)} method for class {@code InputStream}
      * has the same effect as: <pre>{@code  read(b, 0, b.length) }</pre>
      *
-     * @param      b   the buffer into which the data is read.
-     * @return     the total number of bytes read into the buffer, or
-     *             {@code -1} if there is no more data because the end of
-     *             the stream has been reached.
-     * @throws     IOException  If the first byte cannot be read for any reason
-     *             other than the end of the file, if the input stream has been
-     *             closed, or if some other I/O error occurs.
-     * @throws     NullPointerException  if {@code b} is {@code null}.
-     * @see        java.io.InputStream#read(byte[], int, int)
+     * @param b the buffer into which the data is read.
+     * @return the total number of bytes read into the buffer, or
+     * {@code -1} if there is no more data because the end of
+     * the stream has been reached.
+     * @throws IOException          If the first byte cannot be read for any reason
+     *                              other than the end of the file, if the input stream has been
+     *                              closed, or if some other I/O error occurs.
+     * @throws NullPointerException if {@code b} is {@code null}.
+     * @see java.io.InputStream#read(byte[], int, int)
      */
     public int read(byte b[]) throws IOException {
         return read(b, 0, b.length);
     }
 
     /**
+     * 最多读取 len 长度 byte 数据，读取到的第一个数据会存储在 b[off] 位置
+     * <p>
      * Reads up to {@code len} bytes of data from the input stream into
      * an array of bytes.  An attempt is made to read as many as
      * {@code len} bytes, but a smaller number may be read.
@@ -259,23 +268,24 @@ public abstract class InputStream implements Closeable {
      * end of file is detected, or an exception is thrown. Subclasses are
      * encouraged to provide a more efficient implementation of this method.
      *
-     * @param      b     the buffer into which the data is read.
-     * @param      off   the start offset in array {@code b}
-     *                   at which the data is written.
-     * @param      len   the maximum number of bytes to read.
-     * @return     the total number of bytes read into the buffer, or
-     *             {@code -1} if there is no more data because the end of
-     *             the stream has been reached.
-     * @throws     IOException If the first byte cannot be read for any reason
-     *             other than end of file, or if the input stream has been closed,
-     *             or if some other I/O error occurs.
-     * @throws     NullPointerException If {@code b} is {@code null}.
-     * @throws     IndexOutOfBoundsException If {@code off} is negative,
-     *             {@code len} is negative, or {@code len} is greater than
-     *             {@code b.length - off}
-     * @see        java.io.InputStream#read()
+     * @param b   the buffer into which the data is read.
+     * @param off the start offset in array {@code b}
+     *            at which the data is written.
+     * @param len the maximum number of bytes to read.
+     * @return the total number of bytes read into the buffer, or
+     * {@code -1} if there is no more data because the end of
+     * the stream has been reached.
+     * @throws IOException               If the first byte cannot be read for any reason
+     *                                   other than end of file, or if the input stream has been closed,
+     *                                   or if some other I/O error occurs.
+     * @throws NullPointerException      If {@code b} is {@code null}.
+     * @throws IndexOutOfBoundsException If {@code off} is negative,
+     *                                   {@code len} is negative, or {@code len} is greater than
+     *                                   {@code b.length - off}
+     * @see java.io.InputStream#read()
      */
     public int read(byte b[], int off, int len) throws IOException {
+        // 先检查 len + off 是否越界
         Objects.checkFromIndexSize(off, len, b.length);
         if (len == 0) {
             return 0;
@@ -285,16 +295,16 @@ public abstract class InputStream implements Closeable {
         if (c == -1) {
             return -1;
         }
-        b[off] = (byte)c;
+        b[off] = (byte) c;
 
         int i = 1;
         try {
-            for (; i < len ; i++) {
+            for (; i < len; i++) {
                 c = read();
                 if (c == -1) {
                     break;
                 }
-                b[off + i] = (byte)c;
+                b[off + i] = (byte) c;
             }
         } catch (IOException ee) {
         }
@@ -310,6 +320,8 @@ public abstract class InputStream implements Closeable {
     private static final int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
 
     /**
+     * 读取所有 inputstream 中的数据。
+     * <p>
      * Reads all remaining bytes from the input stream. This method blocks until
      * all remaining bytes have been read and end of stream is detected, or an
      * exception is thrown. This method does not close the input stream.
@@ -320,6 +332,8 @@ public abstract class InputStream implements Closeable {
      * <p> Note that this method is intended for simple cases where it is
      * convenient to read all bytes into a byte array. It is not intended for
      * reading input streams with large amounts of data.
+     * <p>
+     * 该方法的设计初衷是为了一次性读取 inputstream 中的数据，而不是读取大量的数据。
      *
      * <p> The behavior for the case where the input stream is <i>asynchronously
      * closed</i>, or the thread interrupted during the read, is highly input
@@ -330,16 +344,15 @@ public abstract class InputStream implements Closeable {
      * stream may not be at end of stream and may be in an inconsistent state.
      * It is strongly recommended that the stream be promptly closed if an I/O
      * error occurs.
-     *
-     * @implSpec
-     * This method invokes {@link #readNBytes(int)} with a length of
-     * {@link Integer#MAX_VALUE}.
+     * <p>
+     * 在读取的时候如果发生 IO 异常，那么建议马上停止继续读取。
      *
      * @return a byte array containing the bytes read from this input stream
-     * @throws IOException if an I/O error occurs
+     * @throws IOException      if an I/O error occurs
      * @throws OutOfMemoryError if an array of the required size cannot be
-     *         allocated.
-     *
+     *                          allocated.
+     * @implSpec This method invokes {@link #readNBytes(int)} with a length of
+     * {@link Integer#MAX_VALUE}.
      * @since 9
      */
     public byte[] readAllBytes() throws IOException {
@@ -347,6 +360,8 @@ public abstract class InputStream implements Closeable {
     }
 
     /**
+     * 读取最多指定长度个 byte。
+     * <p>
      * Reads up to a specified number of bytes from the input stream. This
      * method blocks until the requested number of bytes have been read, end
      * of stream is detected, or an exception is thrown. This method does not
@@ -378,17 +393,14 @@ public abstract class InputStream implements Closeable {
      * It is strongly recommended that the stream be promptly closed if an I/O
      * error occurs.
      *
-     * @implNote
-     * The number of bytes allocated to read data from this stream and return
-     * the result is bounded by {@code 2*(long)len}, inclusive.
-     *
      * @param len the maximum number of bytes to read
      * @return a byte array containing the bytes read from this input stream
      * @throws IllegalArgumentException if {@code length} is negative
-     * @throws IOException if an I/O error occurs
-     * @throws OutOfMemoryError if an array of the required size cannot be
-     *         allocated.
-     *
+     * @throws IOException              if an I/O error occurs
+     * @throws OutOfMemoryError         if an array of the required size cannot be
+     *                                  allocated.
+     * @implNote The number of bytes allocated to read data from this stream and return
+     * the result is bounded by {@code 2*(long)len}, inclusive.
      * @since 11
      */
     public byte[] readNBytes(int len) throws IOException {
@@ -402,16 +414,18 @@ public abstract class InputStream implements Closeable {
         int remaining = len;
         int n;
         do {
+            // 每次读取保存的 byte 数组
             byte[] buf = new byte[Math.min(remaining, DEFAULT_BUFFER_SIZE)];
             int nread = 0;
 
             // read to EOF which may read more or less than buffer size
+            // 直到读满 DEFAULT_BUFFER_SIZE 长度的数量
             while ((n = read(buf, nread,
                     Math.min(buf.length - nread, remaining))) > 0) {
                 nread += n;
                 remaining -= n;
             }
-
+            // 如果有读到数据
             if (nread > 0) {
                 if (MAX_BUFFER_SIZE - total < nread) {
                     throw new OutOfMemoryError("Required array size too large");
@@ -424,6 +438,7 @@ public abstract class InputStream implements Closeable {
                         bufs = new ArrayList<>();
                         bufs.add(result);
                     }
+                    // 添加到 List 中
                     bufs.add(buf);
                 }
             }
@@ -431,17 +446,19 @@ public abstract class InputStream implements Closeable {
             // requested have been read then break
         } while (n >= 0 && remaining > 0);
 
+        // 如果未读到数据
         if (bufs == null) {
             if (result == null) {
                 return new byte[0];
             }
             return result.length == total ?
-                result : Arrays.copyOf(result, total);
+                    result : Arrays.copyOf(result, total);
         }
 
         result = new byte[total];
         int offset = 0;
         remaining = total;
+        // 拼接结果
         for (byte[] b : bufs) {
             int count = Math.min(b.length, remaining);
             System.arraycopy(b, 0, result, offset, count);
@@ -453,6 +470,10 @@ public abstract class InputStream implements Closeable {
     }
 
     /**
+     * 与 {@link #read(byte[], int, int)} 的区别在于该方法可以处理 read 过程中被中断，
+     * 或者出现 IO 异常 的情况。该方法的调用会继续读取。而 {@link #read(byte[], int, int)}
+     * 方法出现上述情况的时候会立刻返回。
+     * <p>
      * Reads the requested number of bytes from the input stream into the given
      * byte array. This method blocks until {@code len} bytes of input data have
      * been read, end of stream is detected, or an exception is thrown. The
@@ -484,22 +505,24 @@ public abstract class InputStream implements Closeable {
      * may be in an inconsistent state. It is strongly recommended that the
      * stream be promptly closed if an I/O error occurs.
      *
-     * @param  b the byte array into which the data is read
-     * @param  off the start offset in {@code b} at which the data is written
-     * @param  len the maximum number of bytes to read
+     * @param b   the byte array into which the data is read
+     * @param off the start offset in {@code b} at which the data is written
+     * @param len the maximum number of bytes to read
      * @return the actual number of bytes read into the buffer
-     * @throws IOException if an I/O error occurs
-     * @throws NullPointerException if {@code b} is {@code null}
+     * @throws IOException               if an I/O error occurs
+     * @throws NullPointerException      if {@code b} is {@code null}
      * @throws IndexOutOfBoundsException If {@code off} is negative, {@code len}
-     *         is negative, or {@code len} is greater than {@code b.length - off}
-     *
+     *                                   is negative, or {@code len} is greater than {@code b.length - off}
      * @since 9
      */
     public int readNBytes(byte[] b, int off, int len) throws IOException {
+        // 检查是否越界
         Objects.checkFromIndexSize(off, len, b.length);
 
         int n = 0;
         while (n < len) {
+            // 正常情况下会一次读完
+            // 但是如果 read 方法出现意外情况，则会多次读取
             int count = read(b, off + n, len - n);
             if (count < 0)
                 break;
@@ -525,10 +548,10 @@ public abstract class InputStream implements Closeable {
      * encouraged to provide a more efficient implementation of this method.
      * For instance, the implementation may depend on the ability to seek.
      *
-     * @param      n   the number of bytes to be skipped.
-     * @return     the actual number of bytes skipped which might be zero.
-     * @throws     IOException  if an I/O error occurs.
-     * @see        java.io.InputStream#skipNBytes(long)
+     * @param n the number of bytes to be skipped.
+     * @return the actual number of bytes skipped which might be zero.
+     * @throws IOException if an I/O error occurs.
+     * @see java.io.InputStream#skipNBytes(long)
      */
     public long skip(long n) throws IOException {
         long remaining = n;
@@ -538,20 +561,24 @@ public abstract class InputStream implements Closeable {
             return 0;
         }
 
-        int size = (int)Math.min(MAX_SKIP_BUFFER_SIZE, remaining);
+        int size = (int) Math.min(MAX_SKIP_BUFFER_SIZE, remaining);
         byte[] skipBuffer = new byte[size];
         while (remaining > 0) {
-            nr = read(skipBuffer, 0, (int)Math.min(size, remaining));
+            nr = read(skipBuffer, 0, (int) Math.min(size, remaining));
+            // stream 中的数据已经读取完
+            // 则不用 skip 了
             if (nr < 0) {
                 break;
             }
             remaining -= nr;
         }
-
+        // 返回实际 skip 的数据长度
         return n - remaining;
     }
 
     /**
+     * 与 skip 的区别就是该方法一定要 skip n 个数据，不然就抛出异常。
+     * <p>
      * Skips over and discards exactly {@code n} bytes of data from this input
      * stream.  If {@code n} is zero, then no bytes are skipped.
      * If {@code n} is negative, then no bytes are skipped.
@@ -567,12 +594,15 @@ public abstract class InputStream implements Closeable {
      * in an inconsistent state. It is strongly recommended that the
      * stream be promptly closed if an I/O error occurs.
      *
-     * @implNote
-     * Subclasses are encouraged to provide a more efficient implementation
+     * @param n the number of bytes to be skipped.
+     * @throws EOFException if end of stream is encountered before the
+     *                      stream can be positioned {@code n} bytes beyond its position
+     *                      when this method was invoked.
+     * @throws IOException  if the stream cannot be positioned properly or
+     *                      if an I/O error occurs.
+     * @implNote Subclasses are encouraged to provide a more efficient implementation
      * of this method.
-     *
-     * @implSpec
-     * If {@code n} is zero or negative, then no bytes are skipped.
+     * @implSpec If {@code n} is zero or negative, then no bytes are skipped.
      * If {@code n} is positive, the default implementation of this method
      * invokes {@link #skip(long) skip()} with parameter {@code n}.  If the
      * return value of {@code skip(n)} is non-negative and less than {@code n},
@@ -581,17 +611,11 @@ public abstract class InputStream implements Closeable {
      * is reached.  If the return value of {@code skip(n)} is negative or
      * greater than {@code n}, then an {@code IOException} is thrown.  Any
      * exception thrown by {@code skip()} or {@code read()} will be propagated.
-     *
-     * @param      n   the number of bytes to be skipped.
-     * @throws     EOFException if end of stream is encountered before the
-     *             stream can be positioned {@code n} bytes beyond its position
-     *             when this method was invoked.
-     * @throws     IOException  if the stream cannot be positioned properly or
-     *             if an I/O error occurs.
-     * @see        java.io.InputStream#skip(long)
+     * @see java.io.InputStream#skip(long)
      */
     public void skipNBytes(long n) throws IOException {
         if (n > 0) {
+            // 返回第一个 skip 实际 skip 的数据长度
             long ns = skip(n);
             if (ns >= 0 && ns < n) { // skipped too few bytes
                 // adjust number to skip
@@ -601,6 +625,7 @@ public abstract class InputStream implements Closeable {
                     n--;
                 }
                 // if not enough skipped, then EOFE
+                // 如果没有 skip n 个 byte 数据，则抛出 EOFException。
                 if (n != 0) {
                     throw new EOFException();
                 }
@@ -611,6 +636,8 @@ public abstract class InputStream implements Closeable {
     }
 
     /**
+     * 返回 inputstream 中数据的长度，是一个估计值，所以不能根据这个值来省确定保存数据的大小。
+     * <p>
      * Returns an estimate of the number of bytes that can be read (or skipped
      * over) from this input stream without blocking, which may be 0, or 0 when
      * end of stream is detected.  The read might be on the same thread or
@@ -631,10 +658,10 @@ public abstract class InputStream implements Closeable {
      *
      * <p> This method should be overridden by subclasses.
      *
-     * @return     an estimate of the number of bytes that can be read (or
-     *             skipped over) from this input stream without blocking or
-     *             {@code 0} when it reaches the end of the input stream.
-     * @throws     IOException if an I/O error occurs.
+     * @return an estimate of the number of bytes that can be read (or
+     * skipped over) from this input stream without blocking or
+     * {@code 0} when it reaches the end of the input stream.
+     * @throws IOException if an I/O error occurs.
      */
     public int available() throws IOException {
         return 0;
@@ -647,14 +674,21 @@ public abstract class InputStream implements Closeable {
      * <p> The {@code close} method of {@code InputStream} does
      * nothing.
      *
-     * @throws     IOException  if an I/O error occurs.
+     * @throws IOException if an I/O error occurs.
      */
-    public void close() throws IOException {}
+    public void close() throws IOException {
+    }
 
     /**
+     * synchronized 关键字修饰，是一个同步方法。
+     * 标记当前 input stream 流的位置，在后续调用 reset 方法之后，
+     * 可以返回之前标记的位置进行重新读取。
+     * <p>
      * Marks the current position in this input stream. A subsequent call to
      * the {@code reset} method repositions this stream at the last marked
      * position so that subsequent reads re-read the same bytes.
+     * <p>
+     * readlimit 参数表示可以读取的 byte 数，如果超过该限制，那么标记就失效。
      *
      * <p> The {@code readlimit} arguments tells this input stream to
      * allow that many bytes to be read before the mark position gets
@@ -673,11 +707,12 @@ public abstract class InputStream implements Closeable {
      * <p> The {@code mark} method of {@code InputStream} does
      * nothing.
      *
-     * @param   readlimit   the maximum limit of bytes that can be read before
-     *                      the mark position becomes invalid.
-     * @see     java.io.InputStream#reset()
+     * @param readlimit the maximum limit of bytes that can be read before
+     *                  the mark position becomes invalid.
+     * @see java.io.InputStream#reset()
      */
-    public synchronized void mark(int readlimit) {}
+    public synchronized void mark(int readlimit) {
+    }
 
     /**
      * Repositions this stream to the position at the time the
@@ -688,13 +723,13 @@ public abstract class InputStream implements Closeable {
      * <ul>
      * <li> If the method {@code markSupported} returns
      * {@code true}, then:
-     *
+     *     抛异常
      *     <ul><li> If the method {@code mark} has not been called since
      *     the stream was created, or the number of bytes read from the stream
      *     since {@code mark} was last called is larger than the argument
      *     to {@code mark} at that last call, then an
      *     {@code IOException} might be thrown.
-     *
+     *     正常逻辑
      *     <li> If such an {@code IOException} is not thrown, then the
      *     stream is reset to a state such that all the bytes read since the
      *     most recent call to {@code mark} (or since the start of the
@@ -718,32 +753,37 @@ public abstract class InputStream implements Closeable {
      * <p>The method {@code reset} for class {@code InputStream}
      * does nothing except throw an {@code IOException}.
      *
-     * @throws  IOException  if this stream has not been marked or if the
-     *          mark has been invalidated.
-     * @see     java.io.InputStream#mark(int)
-     * @see     java.io.IOException
+     * @throws IOException if this stream has not been marked or if the
+     *                     mark has been invalidated.
+     * @see java.io.InputStream#mark(int)
+     * @see java.io.IOException
      */
     public synchronized void reset() throws IOException {
         throw new IOException("mark/reset not supported");
     }
 
     /**
+     * 返回该 stream 是否支持 mark，默认实现为返回 false，子类需要重写该方法。
+     * <p>
      * Tests if this input stream supports the {@code mark} and
      * {@code reset} methods. Whether or not {@code mark} and
      * {@code reset} are supported is an invariant property of a
      * particular input stream instance. The {@code markSupported} method
      * of {@code InputStream} returns {@code false}.
      *
-     * @return  {@code true} if this stream instance supports the mark
-     *          and reset methods; {@code false} otherwise.
-     * @see     java.io.InputStream#mark(int)
-     * @see     java.io.InputStream#reset()
+     * @return {@code true} if this stream instance supports the mark
+     * and reset methods; {@code false} otherwise.
+     * @see java.io.InputStream#mark(int)
+     * @see java.io.InputStream#reset()
      */
     public boolean markSupported() {
         return false;
     }
 
     /**
+     * 调用该方法需要注意的是不会关闭输入流，也不会关闭输出流。
+     * 度过读取过程或者写入过程出现 IO 异常，那么建议立刻停止。
+     * <p>
      * Reads all bytes from this input stream and writes the bytes to the
      * given output stream in the order that they are read. On return, this
      * input stream will be at end of stream. This method does not close either
@@ -761,11 +801,10 @@ public abstract class InputStream implements Closeable {
      * one, or both, streams may be in an inconsistent state. It is strongly
      * recommended that both streams be promptly closed if an I/O error occurs.
      *
-     * @param  out the output stream, non-null
+     * @param out the output stream, non-null
      * @return the number of bytes transferred
-     * @throws IOException if an I/O error occurs when reading or writing
+     * @throws IOException          if an I/O error occurs when reading or writing
      * @throws NullPointerException if {@code out} is {@code null}
-     *
      * @since 9
      */
     public long transferTo(OutputStream out) throws IOException {
