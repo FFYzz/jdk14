@@ -300,6 +300,9 @@ public class FutureTask<V> implements RunnableFuture<V> {
         }
     }
 
+    /**
+     * 要与线程池配合使用才能起到异步的效果，直接调用该方法也是同步调用。
+     */
     public void run() {
         // 执行 run 方法需要 state 为 NEW 且将成功将 runner 引用设置成指向 当前线程
         if (state != NEW ||
