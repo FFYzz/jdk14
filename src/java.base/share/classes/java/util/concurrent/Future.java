@@ -67,7 +67,7 @@ package java.util.concurrent;
  *     } catch (ExecutionException ex) { cleanup(); return; }
  *   }
  * }}</pre>
- *
+ * <p>
  * The {@link FutureTask} class is an implementation of {@code Future} that
  * implements {@code Runnable}, and so may be executed by an {@code Executor}.
  * For example, the above construction with {@code submit} could be replaced by:
@@ -79,15 +79,19 @@ package java.util.concurrent;
  * <a href="package-summary.html#MemoryVisibility"> <i>happen-before</i></a>
  * actions following the corresponding {@code Future.get()} in another thread.
  *
+ * @param <V> The result type returned by this Future's {@code get} method
+ * @author Doug Lea
  * @see FutureTask
  * @see Executor
  * @since 1.5
- * @author Doug Lea
- * @param <V> The result type returned by this Future's {@code get} method
  */
 public interface Future<V> {
 
     /**
+     * task 还未开始 -> 返回 true
+     * task 在进行中 -> 根据 mayInterruptIfRunning 来决定是否可以中断
+     * task 已经结束 -> 返回 false
+     * <p>
      * Attempts to cancel execution of this task.  This attempt will
      * fail if the task has already completed, has already been cancelled,
      * or could not be cancelled for some other reason. If successful,
@@ -102,8 +106,8 @@ public interface Future<V> {
      * will always return {@code true} if this method returned {@code true}.
      *
      * @param mayInterruptIfRunning {@code true} if the thread executing this
-     * task should be interrupted; otherwise, in-progress tasks are allowed
-     * to complete
+     *                              task should be interrupted; otherwise, in-progress tasks are allowed
+     *                              to complete
      * @return {@code false} if the task could not be cancelled,
      * typically because it has already completed normally;
      * {@code true} otherwise
@@ -111,6 +115,8 @@ public interface Future<V> {
     boolean cancel(boolean mayInterruptIfRunning);
 
     /**
+     * 如果 task 被 cancelled，则返回true
+     * <p>
      * Returns {@code true} if this task was cancelled before it completed
      * normally.
      *
@@ -119,8 +125,15 @@ public interface Future<V> {
     boolean isCancelled();
 
     /**
+     * 返回 task 是否已经 Done，Done 的情况可以是
+     * 1. task 已经完成
+     * 2. task 被正常终止
+     * 3. task 发生异常终止
+     * 4. task 被取消
+     * ...
+     * <p>
      * Returns {@code true} if this task completed.
-     *
+     * <p>
      * Completion may be due to normal termination, an exception, or
      * cancellation -- in all of these cases, this method will return
      * {@code true}.
@@ -130,32 +143,38 @@ public interface Future<V> {
     boolean isDone();
 
     /**
+     * 获取计算的结果，若还没有完成，则会阻塞等待
+     * <p>
      * Waits if necessary for the computation to complete, and then
      * retrieves its result.
      *
      * @return the computed result
      * @throws CancellationException if the computation was cancelled
-     * @throws ExecutionException if the computation threw an
-     * exception
-     * @throws InterruptedException if the current thread was interrupted
-     * while waiting
+     * @throws ExecutionException    if the computation threw an
+     *                               exception
+     * @throws InterruptedException  if the current thread was interrupted
+     *                               while waiting
      */
     V get() throws InterruptedException, ExecutionException;
 
     /**
+     * 如果任务还没有准备好，则最久阻塞等待 timeout 时间
+     * 如果在规定时间内完成，则返回值
+     * 若在规定时间内未完成，则
+     *
      * Waits if necessary for at most the given time for the computation
      * to complete, and then retrieves its result, if available.
      *
      * @param timeout the maximum time to wait
-     * @param unit the time unit of the timeout argument
+     * @param unit    the time unit of the timeout argument
      * @return the computed result
      * @throws CancellationException if the computation was cancelled
-     * @throws ExecutionException if the computation threw an
-     * exception
-     * @throws InterruptedException if the current thread was interrupted
-     * while waiting
-     * @throws TimeoutException if the wait timed out
+     * @throws ExecutionException    if the computation threw an
+     *                               exception
+     * @throws InterruptedException  if the current thread was interrupted
+     *                               while waiting
+     * @throws TimeoutException      if the wait timed out
      */
     V get(long timeout, TimeUnit unit)
-        throws InterruptedException, ExecutionException, TimeoutException;
+            throws InterruptedException, ExecutionException, TimeoutException;
 }
