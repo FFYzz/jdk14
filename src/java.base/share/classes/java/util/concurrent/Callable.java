@@ -36,6 +36,15 @@
 package java.util.concurrent;
 
 /**
+ * Callable 与 Runnable 的相似点都是在另一个线程上执行任务。
+ *
+ * Callable 与 Runnable 的两个最大的区别就是
+ * 1. Callable 执行的任务允许有返回值，Runnable 不允许有返回值。
+ * 2. Callable 可以抛出可检查的异常，Runnable 不能抛出可检查的异常。
+ *
+ * @FunctionalInterface 注解会在编译时检查定义的接口是否为函数式接口。
+ * 函数式接口的定义为：只有包含一个抽象方法的借口。
+ *
  * A task that returns a result and may throw an exception.
  * Implementors define a single method with no arguments called
  * {@code call}.
