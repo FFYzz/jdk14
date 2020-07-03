@@ -36,14 +36,17 @@
 package java.util.concurrent;
 
 /**
+ * 继承了 Runnable 接口与 Future 接口，将 Runnable 与 Future 结合起来。
+ * <p>
  * A {@link Future} that is {@link Runnable}. Successful execution of
  * the {@code run} method causes completion of the {@code Future}
  * and allows access to its results.
+ *
+ * @param <V> The result type returned by this Future's {@code get} method
+ * @author Doug Lea
  * @see FutureTask
  * @see Executor
  * @since 1.6
- * @author Doug Lea
- * @param <V> The result type returned by this Future's {@code get} method
  */
 public interface RunnableFuture<V> extends Runnable, Future<V> {
     /**
