@@ -36,6 +36,10 @@
 package java.util.concurrent;
 
 /**
+ * 在给定的延迟之后采取 action。
+ * 实现该接口的类必须实现 compareTo 方法，因为继承了 Comparable 接口。
+ * compareTo 可以指定实现了 Delayed 接口的对象的顺序。作为顺序比较的 base 一般由 getDelay 方法的返回值来比较。
+ *
  * A mix-in style interface for marking objects that should be
  * acted upon after a given delay.
  *
