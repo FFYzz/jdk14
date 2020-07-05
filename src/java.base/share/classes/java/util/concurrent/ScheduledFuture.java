@@ -36,6 +36,9 @@
 package java.util.concurrent;
 
 /**
+ * 继承了 Delayed 接口和 Future 接口，使得该接口的实现类具有执行异步任务的能力。
+ * 此外，还支持任务的延时执行
+ *
  * A delayed result-bearing action that can be cancelled.
  * Usually a scheduled future is the result of scheduling
  * a task with a {@link ScheduledExecutorService}.
