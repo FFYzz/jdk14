@@ -36,6 +36,9 @@
 package java.util.concurrent;
 
 /**
+ * ExecutorCompletionService 是 CompletionService 的具体实现类
+ * CompletionService 的机制主要是内部维护一个队列，并且执行 task 的 executor 是独立的。
+ * <p>
  * A service that decouples the production of new asynchronous tasks
  * from the consumption of the results of completed tasks.  Producers
  * {@code submit} tasks for execution. Consumers {@code take}
@@ -69,8 +72,8 @@ public interface CompletionService<V> {
      * @param task the task to submit
      * @return a Future representing pending completion of the task
      * @throws RejectedExecutionException if the task cannot be
-     *         scheduled for execution
-     * @throws NullPointerException if the task is null
+     *                                    scheduled for execution
+     * @throws NullPointerException       if the task is null
      */
     Future<V> submit(Callable<V> task);
 
@@ -79,18 +82,20 @@ public interface CompletionService<V> {
      * representing that task.  Upon completion, this task may be
      * taken or polled.
      *
-     * @param task the task to submit
+     * @param task   the task to submit
      * @param result the result to return upon successful completion
      * @return a Future representing pending completion of the task,
-     *         and whose {@code get()} method will return the given
-     *         result value upon completion
+     * and whose {@code get()} method will return the given
+     * result value upon completion
      * @throws RejectedExecutionException if the task cannot be
-     *         scheduled for execution
-     * @throws NullPointerException if the task is null
+     *                                    scheduled for execution
+     * @throws NullPointerException       if the task is null
      */
     Future<V> submit(Runnable task, V result);
 
     /**
+     * 获取并移除下一个完成的 future，如果没有完成的 task，则等待。
+     * <p>
      * Retrieves and removes the Future representing the next
      * completed task, waiting if none are yet present.
      *
@@ -100,26 +105,30 @@ public interface CompletionService<V> {
     Future<V> take() throws InterruptedException;
 
     /**
+     * 获取并移除下一个完成的 future，如果没有完成的 task，则返回 null。
+     * <p>
      * Retrieves and removes the Future representing the next
      * completed task, or {@code null} if none are present.
      *
      * @return the Future representing the next completed task, or
-     *         {@code null} if none are present
+     * {@code null} if none are present
      */
     Future<V> poll();
 
     /**
+     * 支持等待时间的 poll
+     * <p>
      * Retrieves and removes the Future representing the next
      * completed task, waiting if necessary up to the specified wait
      * time if none are yet present.
      *
      * @param timeout how long to wait before giving up, in units of
-     *        {@code unit}
-     * @param unit a {@code TimeUnit} determining how to interpret the
-     *        {@code timeout} parameter
+     *                {@code unit}
+     * @param unit    a {@code TimeUnit} determining how to interpret the
+     *                {@code timeout} parameter
      * @return the Future representing the next completed task or
-     *         {@code null} if the specified waiting time elapses
-     *         before one is present
+     * {@code null} if the specified waiting time elapses
+     * before one is present
      * @throws InterruptedException if interrupted while waiting
      */
     Future<V> poll(long timeout, TimeUnit unit) throws InterruptedException;
