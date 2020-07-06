@@ -36,6 +36,8 @@
 package java.util.concurrent;
 
 /**
+ * 解耦任务提交
+ * <p>
  * An object that executes submitted {@link Runnable} tasks. This
  * interface provides a way of decoupling task submission from the
  * mechanics of how each task will be run, including details of thread
@@ -43,13 +45,15 @@ package java.util.concurrent;
  * instead of explicitly creating threads. For example, rather than
  * invoking {@code new Thread(new RunnableTask()).start()} for each
  * of a set of tasks, you might use:
+ * <p>
+ * 如下例子执行则是在调用线程直接执行 task
  *
  * <pre> {@code
  * Executor executor = anExecutor();
  * executor.execute(new RunnableTask1());
  * executor.execute(new RunnableTask2());
  * ...}</pre>
- *
+ * <p>
  * However, the {@code Executor} interface does not strictly require
  * that execution be asynchronous. In the simplest case, an executor
  * can run the submitted task immediately in the caller's thread:
@@ -60,7 +64,9 @@ package java.util.concurrent;
  *     r.run();
  *   }
  * }}</pre>
- *
+ * <p>
+ * 一般情况下，task 会在另外的线程执行，而不是调用者线程执行。
+ * <p>
  * More typically, tasks are executed in some thread other than the
  * caller's thread.  The executor below spawns a new thread for each
  * task.
@@ -71,7 +77,7 @@ package java.util.concurrent;
  *     new Thread(r).start();
  *   }
  * }}</pre>
- *
+ * <p>
  * Many {@code Executor} implementations impose some sort of
  * limitation on how and when tasks are scheduled.  The executor below
  * serializes the submission of tasks to a second executor,
@@ -106,7 +112,12 @@ package java.util.concurrent;
  *     }
  *   }
  * }}</pre>
- *
+ * <p>
+ * <p>
+ * ExecutorService 是一个继承 Executor 的更易扩展的接口
+ * ThreadPoolExecutor 提供了一个易扩展的线程池实现
+ * Executors 提供了一些方便的工厂方法，用于获取线程池
+ * <p>
  * The {@code Executor} implementations provided in this package
  * implement {@link ExecutorService}, which is a more extensive
  * interface.  The {@link ThreadPoolExecutor} class provides an
@@ -118,20 +129,26 @@ package java.util.concurrent;
  * <a href="package-summary.html#MemoryVisibility"><i>happen-before</i></a>
  * its execution begins, perhaps in another thread.
  *
- * @since 1.5
  * @author Doug Lea
+ * @since 1.5
  */
 public interface Executor {
 
     /**
+     * 仅仅是 Executor execute 的 task 可能在
+     * 1. 新的线程中执行
+     * 2. 在线程池中执行
+     * 3. 在当前调用线程中执行
+     * 具体取决于如何实现
+     * <p>
      * Executes the given command at some time in the future.  The command
      * may execute in a new thread, in a pooled thread, or in the calling
      * thread, at the discretion of the {@code Executor} implementation.
      *
      * @param command the runnable task
      * @throws RejectedExecutionException if this task cannot be
-     * accepted for execution
-     * @throws NullPointerException if command is null
+     *                                    accepted for execution
+     * @throws NullPointerException       if command is null
      */
     void execute(Runnable command);
 }
