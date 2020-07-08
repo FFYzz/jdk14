@@ -36,6 +36,8 @@
 package java.util.concurrent;
 
 /**
+ * CompletionService 接口的实现类。
+ * <p>
  * A {@link CompletionService} that uses a supplied {@link Executor}
  * to execute tasks.  This class arranges that submitted tasks are,
  * upon completion, placed on a queue accessible using {@code take}.
@@ -45,7 +47,7 @@ package java.util.concurrent;
  * <p>
  *
  * <b>Usage Examples.</b>
- *
+ * <p>
  * Suppose you have a set of solvers for a certain problem, each
  * returning a value of some type {@code Result}, and would like to
  * run them concurrently, processing the results of each of them that
@@ -65,7 +67,7 @@ package java.util.concurrent;
  *       use(r);
  *   }
  * }}</pre>
- *
+ * <p>
  * Suppose instead that you would like to use the first non-null result
  * of the set of tasks, ignoring any that encounter exceptions,
  * and cancelling all other tasks when the first one is ready:
@@ -101,11 +103,23 @@ package java.util.concurrent;
  * @since 1.5
  */
 public class ExecutorCompletionService<V> implements CompletionService<V> {
+    /**
+     * 线程池
+     */
     private final Executor executor;
+    /**
+     *
+     */
     private final AbstractExecutorService aes;
+    /**
+     * 队列
+     * 用于存放已经 normal 完成的任务
+     */
     private final BlockingQueue<Future<V>> completionQueue;
 
     /**
+     * 私有静态内部类，继承自 FutureTask。
+     * <p>
      * FutureTask extension to enqueue upon completion.
      */
     private static class QueueingFuture<V> extends FutureTask<Void> {
@@ -115,11 +129,25 @@ public class ExecutorCompletionService<V> implements CompletionService<V> {
             this.task = task;
             this.completionQueue = completionQueue;
         }
+
         private final Future<V> task;
         private final BlockingQueue<Future<V>> completionQueue;
-        protected void done() { completionQueue.add(task); }
+
+        /**
+         * 重写了 done 方法
+         * task 完成之后加入到 queue 中
+         */
+        protected void done() {
+            completionQueue.add(task);
+        }
     }
 
+    /**
+     * 任务封装，将 Callable 任务封装成 RunnableFuture
+     *
+     * @param task
+     * @return
+     */
     private RunnableFuture<V> newTaskFor(Callable<V> task) {
         if (aes == null)
             return new FutureTask<V>(task);
@@ -146,8 +174,11 @@ public class ExecutorCompletionService<V> implements CompletionService<V> {
         if (executor == null)
             throw new NullPointerException();
         this.executor = executor;
+        // 如果传入的线程池是 AbstractExecutorService 类型的，则赋值给 aes
+        // 否则 aes 为 null
         this.aes = (executor instanceof AbstractExecutorService) ?
-            (AbstractExecutorService) executor : null;
+                (AbstractExecutorService) executor : null;
+        // 默认使用 LinkedBlockingQueue 队列
         this.completionQueue = new LinkedBlockingQueue<Future<V>>();
     }
 
@@ -156,12 +187,12 @@ public class ExecutorCompletionService<V> implements CompletionService<V> {
      * executor for base task execution and the supplied queue as its
      * completion queue.
      *
-     * @param executor the executor to use
+     * @param executor        the executor to use
      * @param completionQueue the queue to use as the completion queue
-     *        normally one dedicated for use by this service. This
-     *        queue is treated as unbounded -- failed attempted
-     *        {@code Queue.add} operations for completed tasks cause
-     *        them not to be retrievable.
+     *                        normally one dedicated for use by this service. This
+     *                        queue is treated as unbounded -- failed attempted
+     *                        {@code Queue.add} operations for completed tasks cause
+     *                        them not to be retrievable.
      * @throws NullPointerException if executor or completionQueue are {@code null}
      */
     public ExecutorCompletionService(Executor executor,
@@ -170,22 +201,29 @@ public class ExecutorCompletionService<V> implements CompletionService<V> {
             throw new NullPointerException();
         this.executor = executor;
         this.aes = (executor instanceof AbstractExecutorService) ?
-            (AbstractExecutorService) executor : null;
+                (AbstractExecutorService) executor : null;
+        // 指定传入的 Queue
         this.completionQueue = completionQueue;
     }
 
     /**
+     * 执行任务
+     *
      * @throws RejectedExecutionException {@inheritDoc}
      * @throws NullPointerException       {@inheritDoc}
      */
     public Future<V> submit(Callable<V> task) {
         if (task == null) throw new NullPointerException();
+        // 将 task 封装成 RunnableFuture
         RunnableFuture<V> f = newTaskFor(task);
+        // 执行
         executor.execute(new QueueingFuture<V>(f, completionQueue));
         return f;
     }
 
     /**
+     * 执行任务
+     *
      * @throws RejectedExecutionException {@inheritDoc}
      * @throws NullPointerException       {@inheritDoc}
      */
@@ -196,14 +234,35 @@ public class ExecutorCompletionService<V> implements CompletionService<V> {
         return f;
     }
 
+    /**
+     * 从队列中取出已经完成的任务
+     * 若队列为空，则会阻塞。
+     *
+     * @return
+     * @throws InterruptedException
+     */
     public Future<V> take() throws InterruptedException {
         return completionQueue.take();
     }
 
+    /**
+     * 从队列中取出已经完成的任务
+     * 若队列为空，则返回 null
+     *
+     * @return
+     */
     public Future<V> poll() {
         return completionQueue.poll();
     }
 
+    /**
+     * 带超时时间的从队列中取出已经完成的任务
+     *
+     * @param timeout
+     * @param unit
+     * @return
+     * @throws InterruptedException
+     */
     public Future<V> poll(long timeout, TimeUnit unit)
             throws InterruptedException {
         return completionQueue.poll(timeout, unit);
