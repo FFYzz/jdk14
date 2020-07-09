@@ -27,19 +27,20 @@ package java.util.function;
 import java.util.Objects;
 
 /**
+ * 输入一个参数，输出一个布尔值
  * Represents a predicate (boolean-valued function) of one argument.
  *
  * <p>This is a <a href="package-summary.html">functional interface</a>
  * whose functional method is {@link #test(Object)}.
  *
  * @param <T> the type of the input to the predicate
- *
  * @since 1.8
  */
 @FunctionalInterface
 public interface Predicate<T> {
 
     /**
+     * 根据给定参数计算 predicate 的值
      * Evaluates this predicate on the given argument.
      *
      * @param t the input argument
@@ -49,6 +50,8 @@ public interface Predicate<T> {
     boolean test(T t);
 
     /**
+     * 返回当前 Predicate 与 传入 Predicate 的与的 Predicate
+     * <p>
      * Returns a composed predicate that represents a short-circuiting logical
      * AND of this predicate and another.  When evaluating the composed
      * predicate, if this predicate is {@code false}, then the {@code other}
@@ -70,6 +73,8 @@ public interface Predicate<T> {
     }
 
     /**
+     * 返回当前 Predicate 执行的相反的 Predicate
+     * <p>
      * Returns a predicate that represents the logical negation of this
      * predicate.
      *
@@ -81,6 +86,8 @@ public interface Predicate<T> {
     }
 
     /**
+     * 返回当前 Predicate 与 传入 Predicate 的或的 Predicate
+     * <p>
      * Returns a composed predicate that represents a short-circuiting logical
      * OR of this predicate and another.  When evaluating the composed
      * predicate, if this predicate is {@code true}, then the {@code other}
@@ -102,12 +109,14 @@ public interface Predicate<T> {
     }
 
     /**
+     * 返回一个用于比较 targetRef 与 test() 传入参数是否相等的 Predicate
+     * <p>
      * Returns a predicate that tests if two arguments are equal according
      * to {@link Objects#equals(Object, Object)}.
      *
-     * @param <T> the type of arguments to the predicate
+     * @param <T>       the type of arguments to the predicate
      * @param targetRef the object reference with which to compare for equality,
-     *               which may be {@code null}
+     *                  which may be {@code null}
      * @return a predicate that tests if two arguments are equal according
      * to {@link Objects#equals(Object, Object)}
      */
@@ -118,23 +127,22 @@ public interface Predicate<T> {
     }
 
     /**
+     * 返回一个传入 Predicate 相反结果的 Predicate。
+     * <p>
      * Returns a predicate that is the negation of the supplied predicate.
      * This is accomplished by returning result of the calling
      * {@code target.negate()}.
      *
-     * @param <T>     the type of arguments to the specified predicate
-     * @param target  predicate to negate
-     *
+     * @param <T>    the type of arguments to the specified predicate
+     * @param target predicate to negate
      * @return a predicate that negates the results of the supplied
-     *         predicate
-     *
+     * predicate
      * @throws NullPointerException if target is null
-     *
      * @since 11
      */
     @SuppressWarnings("unchecked")
     static <T> Predicate<T> not(Predicate<? super T> target) {
         Objects.requireNonNull(target);
-        return (Predicate<T>)target.negate();
+        return (Predicate<T>) target.negate();
     }
 }
