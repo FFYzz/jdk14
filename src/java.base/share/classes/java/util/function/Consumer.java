@@ -27,6 +27,9 @@ package java.util.function;
 import java.util.Objects;
 
 /**
+ * 接收一个参数，没有输出
+ * 一般用于消费一段内部逻辑，但是没有输出。
+ * <p>
  * Represents an operation that accepts a single input argument and returns no
  * result. Unlike most other functional interfaces, {@code Consumer} is expected
  * to operate via side-effects.
@@ -35,13 +38,14 @@ import java.util.Objects;
  * whose functional method is {@link #accept(Object)}.
  *
  * @param <T> the type of the input to the operation
- *
  * @since 1.8
  */
 @FunctionalInterface
 public interface Consumer<T> {
 
     /**
+     * 在给定的参数上执行 accept 操作
+     * <p>
      * Performs this operation on the given argument.
      *
      * @param t the input argument
@@ -49,6 +53,9 @@ public interface Consumer<T> {
     void accept(T t);
 
     /**
+     * 返回一个 Cnsumer 类型的 Function
+     * 先消费自己的这段逻辑，再消费入参的 consumer 逻辑
+     * <p>
      * Returns a composed {@code Consumer} that performs, in sequence, this
      * operation followed by the {@code after} operation. If performing either
      * operation throws an exception, it is relayed to the caller of the
@@ -62,6 +69,9 @@ public interface Consumer<T> {
      */
     default Consumer<T> andThen(Consumer<? super T> after) {
         Objects.requireNonNull(after);
-        return (T t) -> { accept(t); after.accept(t); };
+        return (T t) -> {
+            accept(t);
+            after.accept(t);
+        };
     }
 }
