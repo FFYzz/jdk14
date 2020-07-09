@@ -27,6 +27,7 @@ package java.util.function;
 import java.util.Objects;
 
 /**
+ * 接受一个参数，并输出一个结果。
  * Represents a function that accepts one argument and produces a result.
  *
  * <p>This is a <a href="package-summary.html">functional interface</a>
@@ -34,13 +35,14 @@ import java.util.Objects;
  *
  * @param <T> the type of the input to the function
  * @param <R> the type of the result of the function
- *
  * @since 1.8
  */
 @FunctionalInterface
 public interface Function<T, R> {
 
     /**
+     * 在给定参数上应用此函数
+     * <p>
      * Applies this function to the given argument.
      *
      * @param t the function argument
@@ -49,18 +51,20 @@ public interface Function<T, R> {
     R apply(T t);
 
     /**
+     * 主义返回的是一个 Function
+     * compose 先执行 before 这个的 Function，将执行的结果作为参数传入到这个定义的 Function
+     * <p>
      * Returns a composed function that first applies the {@code before}
      * function to its input, and then applies this function to the result.
      * If evaluation of either function throws an exception, it is relayed to
      * the caller of the composed function.
      *
-     * @param <V> the type of input to the {@code before} function, and to the
-     *           composed function
+     * @param <V>    the type of input to the {@code before} function, and to the
+     *               composed function
      * @param before the function to apply before this function is applied
      * @return a composed function that first applies the {@code before}
      * function and then applies this function
      * @throws NullPointerException if before is null
-     *
      * @see #andThen(Function)
      */
     default <V> Function<V, R> compose(Function<? super V, ? extends T> before) {
@@ -69,18 +73,20 @@ public interface Function<T, R> {
     }
 
     /**
+     * 同样注意返回的是一个 Function
+     * andThen 先执行当前 Function 的 apply，再将执行得到的结果作为参数传入 after Function
+     * <p>
      * Returns a composed function that first applies this function to
      * its input, and then applies the {@code after} function to the result.
      * If evaluation of either function throws an exception, it is relayed to
      * the caller of the composed function.
      *
-     * @param <V> the type of output of the {@code after} function, and of the
-     *           composed function
+     * @param <V>   the type of output of the {@code after} function, and of the
+     *              composed function
      * @param after the function to apply after this function is applied
      * @return a composed function that first applies this function and then
      * applies the {@code after} function
      * @throws NullPointerException if after is null
-     *
      * @see #compose(Function)
      */
     default <V> Function<T, V> andThen(Function<? super R, ? extends V> after) {
@@ -89,6 +95,8 @@ public interface Function<T, R> {
     }
 
     /**
+     * 是一个输入和输出一致的 Function
+     * <p>
      * Returns a function that always returns its input argument.
      *
      * @param <T> the type of the input and output objects to the function
