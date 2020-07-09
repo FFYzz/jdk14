@@ -25,6 +25,8 @@
 package java.util.function;
 
 /**
+ * 提供一个结果
+ * <p>
  * Represents a supplier of results.
  *
  * <p>There is no requirement that a new or distinct result be returned each
@@ -34,13 +36,14 @@ package java.util.function;
  * whose functional method is {@link #get()}.
  *
  * @param <T> the type of results supplied by this supplier
- *
  * @since 1.8
  */
 @FunctionalInterface
 public interface Supplier<T> {
 
     /**
+     * 返回一个结果
+     * 不需要输入参数，输出一个结果。
      * Gets a result.
      *
      * @return a result
