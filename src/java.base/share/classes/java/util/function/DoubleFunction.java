@@ -25,6 +25,8 @@
 package java.util.function;
 
 /**
+ * 输入一个 double 类型的值，输出一个任意类型的结果
+ * <p>
  * Represents a function that accepts a double-valued argument and produces a
  * result.  This is the {@code double}-consuming primitive specialization for
  * {@link Function}.
@@ -33,7 +35,6 @@ package java.util.function;
  * whose functional method is {@link #apply(double)}.
  *
  * @param <R> the type of the result of the function
- *
  * @see Function
  * @since 1.8
  */
@@ -41,6 +42,8 @@ package java.util.function;
 public interface DoubleFunction<R> {
 
     /**
+     * 输入输出
+     * <p>
      * Applies this function to the given argument.
      *
      * @param value the function argument
