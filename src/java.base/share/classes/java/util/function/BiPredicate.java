@@ -27,6 +27,8 @@ package java.util.function;
 import java.util.Objects;
 
 /**
+ * 输入两个可以是不同类型的值，输出一个布尔值
+ * <p>
  * Represents a predicate (boolean-valued function) of two arguments.  This is
  * the two-arity specialization of {@link Predicate}.
  *
@@ -35,7 +37,6 @@ import java.util.Objects;
  *
  * @param <T> the type of the first argument to the predicate
  * @param <U> the type of the second argument the predicate
- *
  * @see Predicate
  * @since 1.8
  */
@@ -43,6 +44,8 @@ import java.util.Objects;
 public interface BiPredicate<T, U> {
 
     /**
+     * 输入两个值，输出一个布尔值
+     * <p>
      * Evaluates this predicate on the given arguments.
      *
      * @param t the first input argument
@@ -53,6 +56,8 @@ public interface BiPredicate<T, U> {
     boolean test(T t, U u);
 
     /**
+     * 两个 BiPredicate 与的结果的 BiPredicate
+     * <p>
      * Returns a composed predicate that represents a short-circuiting logical
      * AND of this predicate and another.  When evaluating the composed
      * predicate, if this predicate is {@code false}, then the {@code other}
@@ -74,6 +79,8 @@ public interface BiPredicate<T, U> {
     }
 
     /**
+     * BiPredicate 取反的结果的 BiPredicate
+     * <p>
      * Returns a predicate that represents the logical negation of this
      * predicate.
      *
@@ -85,6 +92,8 @@ public interface BiPredicate<T, U> {
     }
 
     /**
+     * 两个 BiPredicate 或的结果的 BiPredicate
+     * <p>
      * Returns a composed predicate that represents a short-circuiting logical
      * OR of this predicate and another.  When evaluating the composed
      * predicate, if this predicate is {@code true}, then the {@code other}
