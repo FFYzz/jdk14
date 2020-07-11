@@ -26,6 +26,8 @@ package java.util.function;
 
 
 /**
+ * 没有输入，返回一个 boolean 类型的输出
+ * <p>
  * Represents a supplier of {@code boolean}-valued results.  This is the
  * {@code boolean}-producing primitive specialization of {@link Supplier}.
  *
@@ -42,6 +44,7 @@ package java.util.function;
 public interface BooleanSupplier {
 
     /**
+     * 获取到一个 boolean 类型的输入
      * Gets a result.
      *
      * @return a result
