@@ -27,6 +27,8 @@ package java.util.function;
 import java.util.Objects;
 
 /**
+ * 接受两个输入参数，输出一个结果
+ * <p>
  * Represents a function that accepts two arguments and produces a result.
  * This is the two-arity specialization of {@link Function}.
  *
@@ -36,7 +38,6 @@ import java.util.Objects;
  * @param <T> the type of the first argument to the function
  * @param <U> the type of the second argument to the function
  * @param <R> the type of the result of the function
- *
  * @see Function
  * @since 1.8
  */
@@ -44,6 +45,8 @@ import java.util.Objects;
 public interface BiFunction<T, U, R> {
 
     /**
+     * 输入两个参数，输出一个结果
+     * <p>
      * Applies this function to the given arguments.
      *
      * @param t the first function argument
@@ -53,13 +56,16 @@ public interface BiFunction<T, U, R> {
     R apply(T t, U u);
 
     /**
+     * 先执行当前 BiFunction，再返回一个传入类型为 Function 的参数
+     * 返回 BiFunction
+     * <p>
      * Returns a composed function that first applies this function to
      * its input, and then applies the {@code after} function to the result.
      * If evaluation of either function throws an exception, it is relayed to
      * the caller of the composed function.
      *
-     * @param <V> the type of output of the {@code after} function, and of the
-     *           composed function
+     * @param <V>   the type of output of the {@code after} function, and of the
+     *              composed function
      * @param after the function to apply after this function is applied
      * @return a composed function that first applies this function and then
      * applies the {@code after} function
