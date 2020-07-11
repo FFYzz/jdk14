@@ -25,6 +25,8 @@
 package java.util.function;
 
 /**
+ * 接受 0 个入参，输出一个 double 类型的结果
+ * <p>
  * Represents a supplier of {@code double}-valued results.  This is the
  * {@code double}-producing primitive specialization of {@link Supplier}.
  *
@@ -41,6 +43,8 @@ package java.util.function;
 public interface DoubleSupplier {
 
     /**
+     * 返回一个 double 类型的值
+     * <p>
      * Gets a result.
      *
      * @return a result
