@@ -25,6 +25,8 @@
 package java.util.function;
 
 /**
+ * 接受一个 long 类型的输入，输出一个 double 类型的结果
+ * <p>
  * Represents a function that accepts a long-valued argument and produces a
  * double-valued result.  This is the {@code long}-to-{@code double} primitive
  * specialization for {@link Function}.
@@ -39,6 +41,8 @@ package java.util.function;
 public interface LongToDoubleFunction {
 
     /**
+     * long 转 double
+     * <p>
      * Applies this function to the given argument.
      *
      * @param value the function argument
