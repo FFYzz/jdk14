@@ -41,6 +41,8 @@ import java.util.Objects;
 public interface DoublePredicate {
 
     /**
+     * 输入一个 double 类型的值，输出一个 boolean 类型的结果
+     * <p>
      * Evaluates this predicate on the given argument.
      *
      * @param value the input argument
@@ -50,6 +52,9 @@ public interface DoublePredicate {
     boolean test(double value);
 
     /**
+     * 两个 DoublePredicate 与
+     * 返回 DoublePredicate
+     * <p>
      * Returns a composed predicate that represents a short-circuiting logical
      * AND of this predicate and another.  When evaluating the composed
      * predicate, if this predicate is {@code false}, then the {@code other}
@@ -71,6 +76,9 @@ public interface DoublePredicate {
     }
 
     /**
+     * DoublePredicate 取反
+     * 返回 DoublePredicate
+     * <p>
      * Returns a predicate that represents the logical negation of this
      * predicate.
      *
@@ -82,6 +90,9 @@ public interface DoublePredicate {
     }
 
     /**
+     * DoublePredicate 或
+     * 返回 DoublePredicate
+     * <p>
      * Returns a composed predicate that represents a short-circuiting logical
      * OR of this predicate and another.  When evaluating the composed
      * predicate, if this predicate is {@code true}, then the {@code other}
