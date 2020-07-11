@@ -25,6 +25,8 @@
 package java.util.function;
 
 /**
+ * 输入两个 Double 类型的值，输出一个 double 类型的结果
+ * <p>
  * Represents an operation upon two {@code double}-valued operands and producing a
  * {@code double}-valued result.   This is the primitive type specialization of
  * {@link BinaryOperator} for {@code double}.
@@ -39,9 +41,11 @@ package java.util.function;
 @FunctionalInterface
 public interface DoubleBinaryOperator {
     /**
+     * 输入两个 Double 类型的值，输出一个 double 类型的结果
+     * <p>
      * Applies this operator to the given operands.
      *
-     * @param left the first operand
+     * @param left  the first operand
      * @param right the second operand
      * @return the operator result
      */
