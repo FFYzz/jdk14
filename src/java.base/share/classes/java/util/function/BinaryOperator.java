@@ -28,6 +28,8 @@ import java.util.Objects;
 import java.util.Comparator;
 
 /**
+ * 继承自 BiFunction，要求输入输出参数类型全部一致
+ * <p>
  * Represents an operation upon two operands of the same type, producing a result
  * of the same type as the operands.  This is a specialization of
  * {@link BiFunction} for the case where the operands and the result are all of
@@ -37,21 +39,23 @@ import java.util.Comparator;
  * whose functional method is {@link #apply(Object, Object)}.
  *
  * @param <T> the type of the operands and result of the operator
- *
  * @see BiFunction
  * @see UnaryOperator
  * @since 1.8
  */
 @FunctionalInterface
-public interface BinaryOperator<T> extends BiFunction<T,T,T> {
+public interface BinaryOperator<T> extends BiFunction<T, T, T> {
     /**
+     * 根据指定的 Comparator，输出两个相同类型的参数中较小的那个，返回 BinaryOperator
+     * 因为继承自 BiFunction，因此可以调用 apply 来获取结果
+     * <p>
      * Returns a {@link BinaryOperator} which returns the lesser of two elements
      * according to the specified {@code Comparator}.
      *
-     * @param <T> the type of the input arguments of the comparator
+     * @param <T>        the type of the input arguments of the comparator
      * @param comparator a {@code Comparator} for comparing the two values
      * @return a {@code BinaryOperator} which returns the lesser of its operands,
-     *         according to the supplied {@code Comparator}
+     * according to the supplied {@code Comparator}
      * @throws NullPointerException if the argument is null
      */
     public static <T> BinaryOperator<T> minBy(Comparator<? super T> comparator) {
@@ -60,13 +64,16 @@ public interface BinaryOperator<T> extends BiFunction<T,T,T> {
     }
 
     /**
+     * 根据指定的 Comparator，输出两个相同类型的参数中较大的那个，返回 BinaryOperator
+     * 因为继承自 BiFunction，因此可以调用 apply 来获取结果
+     * <p>
      * Returns a {@link BinaryOperator} which returns the greater of two elements
      * according to the specified {@code Comparator}.
      *
-     * @param <T> the type of the input arguments of the comparator
+     * @param <T>        the type of the input arguments of the comparator
      * @param comparator a {@code Comparator} for comparing the two values
      * @return a {@code BinaryOperator} which returns the greater of its operands,
-     *         according to the supplied {@code Comparator}
+     * according to the supplied {@code Comparator}
      * @throws NullPointerException if the argument is null
      */
     public static <T> BinaryOperator<T> maxBy(Comparator<? super T> comparator) {
