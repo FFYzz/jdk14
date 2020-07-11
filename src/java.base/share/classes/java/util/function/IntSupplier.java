@@ -25,6 +25,8 @@
 package java.util.function;
 
 /**
+ * 参考 {@link java.util.function.DoubleSupplier}
+ * <p>
  * Represents a supplier of {@code int}-valued results.  This is the
  * {@code int}-producing primitive specialization of {@link Supplier}.
  *

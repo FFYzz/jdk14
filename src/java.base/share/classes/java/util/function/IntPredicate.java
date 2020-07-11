@@ -27,6 +27,8 @@ package java.util.function;
 import java.util.Objects;
 
 /**
+ * 参考 {@link java.util.function.DoublePredicate}
+ * <p>
  * Represents a predicate (boolean-valued function) of one {@code int}-valued
  * argument. This is the {@code int}-consuming primitive type specialization of
  * {@link Predicate}.

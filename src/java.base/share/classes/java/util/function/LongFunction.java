@@ -25,6 +25,8 @@
 package java.util.function;
 
 /**
+ * 参考 {@link java.util.function.DoubleFunction}
+ * <p>
  * Represents a function that accepts a long-valued argument and produces a
  * result.  This is the {@code long}-consuming primitive specialization for
  * {@link Function}.
@@ -33,7 +35,6 @@ package java.util.function;
  * whose functional method is {@link #apply(long)}.
  *
  * @param <R> the type of the result of the function
- *
  * @see Function
  * @since 1.8
  */

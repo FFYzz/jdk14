@@ -27,6 +27,8 @@ package java.util.function;
 import java.util.Objects;
 
 /**
+ * 参考 {@link java.util.function.DoubleConsumer}
+ * <p>
  * Represents an operation that accepts a single {@code long}-valued argument and
  * returns no result.  This is the primitive type specialization of
  * {@link Consumer} for {@code long}.  Unlike most other functional interfaces,
@@ -62,6 +64,9 @@ public interface LongConsumer {
      */
     default LongConsumer andThen(LongConsumer after) {
         Objects.requireNonNull(after);
-        return (long t) -> { accept(t); after.accept(t); };
+        return (long t) -> {
+            accept(t);
+            after.accept(t);
+        };
     }
 }

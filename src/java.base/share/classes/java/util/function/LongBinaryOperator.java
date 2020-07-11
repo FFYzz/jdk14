@@ -25,6 +25,8 @@
 package java.util.function;
 
 /**
+ * 参考 {@link java.util.function.DoubleBinaryOperator}
+ * <p>
  * Represents an operation upon two {@code long}-valued operands and producing a
  * {@code long}-valued result.   This is the primitive type specialization of
  * {@link BinaryOperator} for {@code long}.
@@ -42,7 +44,7 @@ public interface LongBinaryOperator {
     /**
      * Applies this operator to the given operands.
      *
-     * @param left the first operand
+     * @param left  the first operand
      * @param right the second operand
      * @return the operator result
      */
