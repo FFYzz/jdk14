@@ -27,6 +27,8 @@ package java.util.function;
 import java.util.Objects;
 
 /**
+ * 输入一个 double 类型的值，消费该值
+ * <p>
  * Represents an operation that accepts a single {@code double}-valued argument and
  * returns no result.  This is the primitive type specialization of
  * {@link Consumer} for {@code double}.  Unlike most other functional interfaces,
@@ -42,6 +44,8 @@ import java.util.Objects;
 public interface DoubleConsumer {
 
     /**
+     * 消费动作
+     * <p>
      * Performs this operation on the given argument.
      *
      * @param value the input argument
@@ -49,6 +53,8 @@ public interface DoubleConsumer {
     void accept(double value);
 
     /**
+     * 当前 DoubleConsumer 先进行消费，随后传入的 DoubleConsumer 进行消费。
+     * <p>
      * Returns a composed {@code DoubleConsumer} that performs, in sequence, this
      * operation followed by the {@code after} operation. If performing either
      * operation throws an exception, it is relayed to the caller of the
@@ -62,6 +68,9 @@ public interface DoubleConsumer {
      */
     default DoubleConsumer andThen(DoubleConsumer after) {
         Objects.requireNonNull(after);
-        return (double t) -> { accept(t); after.accept(t); };
+        return (double t) -> {
+            accept(t);
+            after.accept(t);
+        };
     }
 }
