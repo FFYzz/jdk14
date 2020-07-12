@@ -27,6 +27,9 @@ package java.util.function;
 import java.util.Objects;
 
 /**
+ * double 类型的一元操作
+ * 输入一个 double 类型的参数，输出一个 double 类型的参数
+ * <p>
  * Represents an operation on a single {@code double}-valued operand that produces
  * a {@code double}-valued result.  This is the primitive type specialization of
  * {@link UnaryOperator} for {@code double}.
@@ -41,6 +44,8 @@ import java.util.Objects;
 public interface DoubleUnaryOperator {
 
     /**
+     * 输入 / 输出
+     * <p>
      * Applies this operator to the given operand.
      *
      * @param operand the operand
@@ -49,6 +54,10 @@ public interface DoubleUnaryOperator {
     double applyAsDouble(double operand);
 
     /**
+     * 执行两个组合的 DoubleUnaryOperator
+     * 先执行 before ，再执行当前的 DoubleUnaryOperator
+     * 返回 DoubleUnaryOperator
+     * <p>
      * Returns a composed operator that first applies the {@code before}
      * operator to its input, and then applies this operator to the result.
      * If evaluation of either operator throws an exception, it is relayed to
@@ -58,7 +67,6 @@ public interface DoubleUnaryOperator {
      * @return a composed operator that first applies the {@code before}
      * operator and then applies this operator
      * @throws NullPointerException if before is null
-     *
      * @see #andThen(DoubleUnaryOperator)
      */
     default DoubleUnaryOperator compose(DoubleUnaryOperator before) {
@@ -67,6 +75,10 @@ public interface DoubleUnaryOperator {
     }
 
     /**
+     * 执行两个组合的 DoubleUnaryOperator
+     * 先执行 当前 DoubleUnaryOperator ，再执行 after
+     * 返回 DoubleUnaryOperator
+     * <p>
      * Returns a composed operator that first applies this operator to
      * its input, and then applies the {@code after} operator to the result.
      * If evaluation of either operator throws an exception, it is relayed to
@@ -76,7 +88,6 @@ public interface DoubleUnaryOperator {
      * @return a composed operator that first applies this operator and then
      * applies the {@code after} operator
      * @throws NullPointerException if after is null
-     *
      * @see #compose(DoubleUnaryOperator)
      */
     default DoubleUnaryOperator andThen(DoubleUnaryOperator after) {
@@ -85,6 +96,8 @@ public interface DoubleUnaryOperator {
     }
 
     /**
+     * 快速返回一个输入与输出一致的 DoubleUnaryOperator
+     * <p>
      * Returns a unary operator that always returns its input argument.
      *
      * @return a unary operator that always returns its input argument

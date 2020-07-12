@@ -27,6 +27,8 @@ package java.util.function;
 import java.util.Objects;
 
 /**
+ * 输入一个 int 类型的参数，输出一个 int 类型的结果
+ * <p>
  * Represents an operation on a single {@code int}-valued operand that produces
  * an {@code int}-valued result.  This is the primitive type specialization of
  * {@link UnaryOperator} for {@code int}.
@@ -41,6 +43,8 @@ import java.util.Objects;
 public interface IntUnaryOperator {
 
     /**
+     * 输入 / 输出
+     * <p>
      * Applies this operator to the given operand.
      *
      * @param operand the operand
@@ -49,6 +53,10 @@ public interface IntUnaryOperator {
     int applyAsInt(int operand);
 
     /**
+     * 组合两个 IntUnaryOperator
+     * 先执行 before，再执行当前 IntUnaryOperator
+     * 返回 IntUnaryOperator
+     * <p>
      * Returns a composed operator that first applies the {@code before}
      * operator to its input, and then applies this operator to the result.
      * If evaluation of either operator throws an exception, it is relayed to
@@ -58,7 +66,6 @@ public interface IntUnaryOperator {
      * @return a composed operator that first applies the {@code before}
      * operator and then applies this operator
      * @throws NullPointerException if before is null
-     *
      * @see #andThen(IntUnaryOperator)
      */
     default IntUnaryOperator compose(IntUnaryOperator before) {
@@ -67,6 +74,10 @@ public interface IntUnaryOperator {
     }
 
     /**
+     * 组合两个 IntUnaryOperator
+     * 先执行 当前 IntUnaryOperator，再执行 before
+     * 返回 IntUnaryOperator
+     * <p>
      * Returns a composed operator that first applies this operator to
      * its input, and then applies the {@code after} operator to the result.
      * If evaluation of either operator throws an exception, it is relayed to
@@ -76,7 +87,6 @@ public interface IntUnaryOperator {
      * @return a composed operator that first applies this operator and then
      * applies the {@code after} operator
      * @throws NullPointerException if after is null
-     *
      * @see #compose(IntUnaryOperator)
      */
     default IntUnaryOperator andThen(IntUnaryOperator after) {
@@ -85,6 +95,8 @@ public interface IntUnaryOperator {
     }
 
     /**
+     * 快速返回一个输入与输出一致的 IntUnaryOperator
+     * <p>
      * Returns a unary operator that always returns its input argument.
      *
      * @return a unary operator that always returns its input argument

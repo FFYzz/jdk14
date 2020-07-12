@@ -27,6 +27,8 @@ package java.util.function;
 import java.util.Objects;
 
 /**
+ * 接受一个 long 类型的输入，返回一个 long 类型的结果
+ * <p>
  * Represents an operation on a single {@code long}-valued operand that produces
  * a {@code long}-valued result.  This is the primitive type specialization of
  * {@link UnaryOperator} for {@code long}.
@@ -41,6 +43,8 @@ import java.util.Objects;
 public interface LongUnaryOperator {
 
     /**
+     * 输入 / 输出
+     * <p>
      * Applies this operator to the given operand.
      *
      * @param operand the operand
@@ -49,6 +53,8 @@ public interface LongUnaryOperator {
     long applyAsLong(long operand);
 
     /**
+     * 组合
+     * <p>
      * Returns a composed operator that first applies the {@code before}
      * operator to its input, and then applies this operator to the result.
      * If evaluation of either operator throws an exception, it is relayed to
@@ -58,7 +64,6 @@ public interface LongUnaryOperator {
      * @return a composed operator that first applies the {@code before}
      * operator and then applies this operator
      * @throws NullPointerException if before is null
-     *
      * @see #andThen(LongUnaryOperator)
      */
     default LongUnaryOperator compose(LongUnaryOperator before) {
@@ -67,6 +72,8 @@ public interface LongUnaryOperator {
     }
 
     /**
+     * 组合
+     * <p>
      * Returns a composed operator that first applies this operator to
      * its input, and then applies the {@code after} operator to the result.
      * If evaluation of either operator throws an exception, it is relayed to
@@ -76,7 +83,6 @@ public interface LongUnaryOperator {
      * @return a composed operator that first applies this operator and then
      * applies the {@code after} operator
      * @throws NullPointerException if after is null
-     *
      * @see #compose(LongUnaryOperator)
      */
     default LongUnaryOperator andThen(LongUnaryOperator after) {
@@ -85,6 +91,8 @@ public interface LongUnaryOperator {
     }
 
     /**
+     * 快速获取到一个输入与输出一致的 LongUnaryOperator
+     * <p>
      * Returns a unary operator that always returns its input argument.
      *
      * @return a unary operator that always returns its input argument
