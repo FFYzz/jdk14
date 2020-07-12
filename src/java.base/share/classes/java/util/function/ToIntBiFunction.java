@@ -25,6 +25,8 @@
 package java.util.function;
 
 /**
+ * 输入两个任意类型的参数，输出一个 int 类型的结果
+ * <p>
  * Represents a function that accepts two arguments and produces an int-valued
  * result.  This is the {@code int}-producing primitive specialization for
  * {@link BiFunction}.
@@ -34,7 +36,6 @@ package java.util.function;
  *
  * @param <T> the type of the first argument to the function
  * @param <U> the type of the second argument to the function
- *
  * @see BiFunction
  * @since 1.8
  */

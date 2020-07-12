@@ -25,6 +25,8 @@
 package java.util.function;
 
 /**
+ * 输入一个任意类型的参数，输出一个 int 类型的结果
+ * <p>
  * Represents a function that produces an int-valued result.  This is the
  * {@code int}-producing primitive specialization for {@link Function}.
  *
@@ -32,7 +34,6 @@ package java.util.function;
  * whose functional method is {@link #applyAsInt(Object)}.
  *
  * @param <T> the type of the input to the function
- *
  * @see Function
  * @since 1.8
  */
