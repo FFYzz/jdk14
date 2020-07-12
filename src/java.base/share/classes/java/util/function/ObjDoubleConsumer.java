@@ -25,6 +25,9 @@
 package java.util.function;
 
 /**
+ * 接受一个 T 类型的参数和一个 double 类型的参数
+ * 消费之
+ * <p>
  * Represents an operation that accepts an object-valued and a
  * {@code double}-valued argument, and returns no result.  This is the
  * {@code (reference, double)} specialization of {@link BiConsumer}.
@@ -35,7 +38,6 @@ package java.util.function;
  * whose functional method is {@link #accept(Object, double)}.
  *
  * @param <T> the type of the object argument to the operation
- *
  * @see BiConsumer
  * @since 1.8
  */
@@ -43,9 +45,11 @@ package java.util.function;
 public interface ObjDoubleConsumer<T> {
 
     /**
+     * 消费方法定义
+     * <p>
      * Performs this operation on the given arguments.
      *
-     * @param t the first input argument
+     * @param t     the first input argument
      * @param value the second input argument
      */
     void accept(T t, double value);
