@@ -36,6 +36,9 @@
 package java.util.concurrent;
 
 /**
+ * 继承自 ExecutorService 接口，ScheduledExecutorService 接口支持设置
+ * 任务的延迟执行以及任务的周期性执行
+ * <p>
  * An {@link ExecutorService} that can schedule commands to run after a given
  * delay, or to execute periodically.
  *
@@ -44,12 +47,16 @@ package java.util.concurrent;
  * execution. The {@code scheduleAtFixedRate} and
  * {@code scheduleWithFixedDelay} methods create and execute tasks
  * that run periodically until cancelled.
+ * <p>
+ * 传入的 delay 值如果为 0 值或者为负值，则表示不延迟，马上执行。
  *
  * <p>Commands submitted using the {@link Executor#execute(Runnable)}
  * and {@link ExecutorService} {@code submit} methods are scheduled
  * with a requested delay of zero. Zero and negative delays (but not
  * periods) are also allowed in {@code schedule} methods, and are
  * treated as requests for immediate execution.
+ *
+ *
  *
  * <p>All {@code schedule} methods accept <em>relative</em> delays and
  * periods as arguments, not absolute times or dates. It is a simple
@@ -66,7 +73,7 @@ package java.util.concurrent;
  * the ScheduledExecutorService implementations provided in this package.
  *
  * <h2>Usage Example</h2>
- *
+ * <p>
  * Here is a class with a method that sets up a ScheduledExecutorService
  * to beep every ten seconds for an hour:
  *
@@ -85,56 +92,69 @@ package java.util.concurrent;
  *   }
  * }}</pre>
  *
- * @since 1.5
  * @author Doug Lea
+ * @since 1.5
  */
 public interface ScheduledExecutorService extends ExecutorService {
 
     /**
+     * 提交一个在 delay 时间后只执行一次的 task
+     * 返回一个 ScheduledFuture
+     * <p>
      * Submits a one-shot task that becomes enabled after the given delay.
      *
      * @param command the task to execute
-     * @param delay the time from now to delay execution
-     * @param unit the time unit of the delay parameter
+     * @param delay   the time from now to delay execution
+     * @param unit    the time unit of the delay parameter
      * @return a ScheduledFuture representing pending completion of
-     *         the task and whose {@code get()} method will return
-     *         {@code null} upon completion
+     * the task and whose {@code get()} method will return
+     * {@code null} upon completion
      * @throws RejectedExecutionException if the task cannot be
-     *         scheduled for execution
-     * @throws NullPointerException if command or unit is null
+     *                                    scheduled for execution
+     * @throws NullPointerException       if command or unit is null
      */
     public ScheduledFuture<?> schedule(Runnable command,
                                        long delay, TimeUnit unit);
 
     /**
+     * 提交一个带返回值得在 delay 时间之后只执行一次的 task
+     * 返回一个 ScheduledFuture
+     * <p>
      * Submits a value-returning one-shot task that becomes enabled
      * after the given delay.
      *
      * @param callable the function to execute
-     * @param delay the time from now to delay execution
-     * @param unit the time unit of the delay parameter
-     * @param <V> the type of the callable's result
+     * @param delay    the time from now to delay execution
+     * @param unit     the time unit of the delay parameter
+     * @param <V>      the type of the callable's result
      * @return a ScheduledFuture that can be used to extract result or cancel
      * @throws RejectedExecutionException if the task cannot be
-     *         scheduled for execution
-     * @throws NullPointerException if callable or unit is null
+     *                                    scheduled for execution
+     * @throws NullPointerException       if callable or unit is null
      */
     public <V> ScheduledFuture<V> schedule(Callable<V> callable,
                                            long delay, TimeUnit unit);
 
     /**
+     * 提交一个在首次延时之后开始周期性执行的任务。计算上一个任务没有完成，
+     * 下一个任务在达到指定的周期时间后也会开始执行。
+     * <p>
      * Submits a periodic action that becomes enabled first after the
      * given initial delay, and subsequently with the given period;
      * that is, executions will commence after
      * {@code initialDelay}, then {@code initialDelay + period}, then
      * {@code initialDelay + 2 * period}, and so on.
-     *
+     * <p>
+     * 以下情况发生时任务才会停止：
      * <p>The sequence of task executions continues indefinitely until
      * one of the following exceptional completions occur:
      * <ul>
+     * 1. 通过返回的 future 调用 cancell 方法
      * <li>The task is {@linkplain Future#cancel explicitly cancelled}
      * via the returned future.
+     * 2. executor 被终止
      * <li>The executor terminates, also resulting in task cancellation.
+     * 3. 执行中的 task 抛出异常
      * <li>An execution of the task throws an exception.  In this case
      * calling {@link Future#get() get} on the returned future will throw
      * {@link ExecutionException}, holding the exception as its cause.
@@ -142,24 +162,25 @@ public interface ScheduledExecutorService extends ExecutorService {
      * Subsequent executions are suppressed.  Subsequent calls to
      * {@link Future#isDone isDone()} on the returned future will
      * return {@code true}.
-     *
+     * <p>
+     * 如果中间有一个任务延迟执行了，那么后续的任务也会同步延迟。
      * <p>If any execution of this task takes longer than its period, then
      * subsequent executions may start late, but will not concurrently
      * execute.
      *
-     * @param command the task to execute
+     * @param command      the task to execute
      * @param initialDelay the time to delay first execution
-     * @param period the period between successive executions
-     * @param unit the time unit of the initialDelay and period parameters
+     * @param period       the period between successive executions
+     * @param unit         the time unit of the initialDelay and period parameters
      * @return a ScheduledFuture representing pending completion of
-     *         the series of repeated tasks.  The future's {@link
-     *         Future#get() get()} method will never return normally,
-     *         and will throw an exception upon task cancellation or
-     *         abnormal termination of a task execution.
+     * the series of repeated tasks.  The future's {@link
+     * Future#get() get()} method will never return normally,
+     * and will throw an exception upon task cancellation or
+     * abnormal termination of a task execution.
      * @throws RejectedExecutionException if the task cannot be
-     *         scheduled for execution
-     * @throws NullPointerException if command or unit is null
-     * @throws IllegalArgumentException if period less than or equal to zero
+     *                                    scheduled for execution
+     * @throws NullPointerException       if command or unit is null
+     * @throws IllegalArgumentException   if period less than or equal to zero
      */
     public ScheduledFuture<?> scheduleAtFixedRate(Runnable command,
                                                   long initialDelay,
@@ -167,6 +188,8 @@ public interface ScheduledExecutorService extends ExecutorService {
                                                   TimeUnit unit);
 
     /**
+     * 提交一个在首次延时之后开始周期性执行的任务。上一个任务完成，之后开始计时。
+     * <p>
      * Submits a periodic action that becomes enabled first after the
      * given initial delay, and subsequently with the given delay
      * between the termination of one execution and the commencement of
@@ -186,20 +209,20 @@ public interface ScheduledExecutorService extends ExecutorService {
      * {@link Future#isDone isDone()} on the returned future will
      * return {@code true}.
      *
-     * @param command the task to execute
+     * @param command      the task to execute
      * @param initialDelay the time to delay first execution
-     * @param delay the delay between the termination of one
-     * execution and the commencement of the next
-     * @param unit the time unit of the initialDelay and delay parameters
+     * @param delay        the delay between the termination of one
+     *                     execution and the commencement of the next
+     * @param unit         the time unit of the initialDelay and delay parameters
      * @return a ScheduledFuture representing pending completion of
-     *         the series of repeated tasks.  The future's {@link
-     *         Future#get() get()} method will never return normally,
-     *         and will throw an exception upon task cancellation or
-     *         abnormal termination of a task execution.
+     * the series of repeated tasks.  The future's {@link
+     * Future#get() get()} method will never return normally,
+     * and will throw an exception upon task cancellation or
+     * abnormal termination of a task execution.
      * @throws RejectedExecutionException if the task cannot be
-     *         scheduled for execution
-     * @throws NullPointerException if command or unit is null
-     * @throws IllegalArgumentException if delay less than or equal to zero
+     *                                    scheduled for execution
+     * @throws NullPointerException       if command or unit is null
+     * @throws IllegalArgumentException   if delay less than or equal to zero
      */
     public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command,
                                                      long initialDelay,
