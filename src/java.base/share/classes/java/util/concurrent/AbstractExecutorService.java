@@ -236,12 +236,12 @@ public abstract class AbstractExecutorService implements ExecutorService {
                         // 计算剩余时间
                         nanos = deadline - System.nanoTime();
                     } else
-                        // 尝试获取，获取不到抛出异常
+                        // 尝试获取，获取不到则一直阻塞
                         f = ecs.take();
                 }
                 // 有任务已经完成
                 if (f != null) {
-                    --active;
+                    --active;5
                     try {
                         // 直接返回
                         return f.get();
