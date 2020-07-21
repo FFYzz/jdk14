@@ -57,21 +57,32 @@ package java.util;
  * <a href="{@docRoot}/java.base/java/util/package-summary.html#CollectionsFramework">
  * Java Collections Framework</a>.
  *
- * @since 1.5
- * @author Doug Lea
  * @param <E> the type of elements held in this queue
+ * @author Doug Lea
+ * @since 1.5
+ */
+
+/**
+ * 抽象的 Queue 实现
+ *
+ * @param <E>
  */
 public abstract class AbstractQueue<E>
-    extends AbstractCollection<E>
-    implements Queue<E> {
+        extends AbstractCollection<E>
+        implements Queue<E> {
 
     /**
+     * 留给子类重写
+     * <p>
      * Constructor for use by subclasses.
      */
     protected AbstractQueue() {
     }
 
     /**
+     * 添加方法
+     * 基于 offer 实现
+     * <p>
      * Inserts the specified element into this queue if it is possible to do so
      * immediately without violating capacity restrictions, returning
      * {@code true} upon success and throwing an {@code IllegalStateException}
@@ -82,23 +93,28 @@ public abstract class AbstractQueue<E>
      *
      * @param e the element to add
      * @return {@code true} (as specified by {@link Collection#add})
-     * @throws IllegalStateException if the element cannot be added at this
-     *         time due to capacity restrictions
-     * @throws ClassCastException if the class of the specified element
-     *         prevents it from being added to this queue
-     * @throws NullPointerException if the specified element is null and
-     *         this queue does not permit null elements
+     * @throws IllegalStateException    if the element cannot be added at this
+     *                                  time due to capacity restrictions
+     * @throws ClassCastException       if the class of the specified element
+     *                                  prevents it from being added to this queue
+     * @throws NullPointerException     if the specified element is null and
+     *                                  this queue does not permit null elements
      * @throws IllegalArgumentException if some property of this element
-     *         prevents it from being added to this queue
+     *                                  prevents it from being added to this queue
      */
     public boolean add(E e) {
+        // 成功入队，则返回true
         if (offer(e))
             return true;
+            // 未入队，则抛异常
         else
             throw new IllegalStateException("Queue full");
     }
 
     /**
+     * 移除元素
+     * 基于 poll 实现
+     * <p>
      * Retrieves and removes the head of this queue.  This method differs
      * from {@link #poll poll} only in that it throws an exception if this
      * queue is empty.
@@ -111,13 +127,18 @@ public abstract class AbstractQueue<E>
      */
     public E remove() {
         E x = poll();
+        // 如果成功出队
         if (x != null)
+            // 直接返回
             return x;
+            // 未出队，则抛异常
         else
             throw new NoSuchElementException();
     }
 
     /**
+     * 获取队头元素，不出队
+     * <p>
      * Retrieves, but does not remove, the head of this queue.  This method
      * differs from {@link #peek peek} only in that it throws an exception if
      * this queue is empty.
@@ -132,11 +153,14 @@ public abstract class AbstractQueue<E>
         E x = peek();
         if (x != null)
             return x;
+            // 队列为空则抛异常
         else
             throw new NoSuchElementException();
     }
 
     /**
+     * 清空队列
+     * <p>
      * Removes all of the elements from this queue.
      * The queue will be empty after this call returns.
      *
@@ -149,6 +173,9 @@ public abstract class AbstractQueue<E>
     }
 
     /**
+     * 将所有元素加入到队列中
+     * 如果有一个成功加入到队列中，则返回 true
+     * <p>
      * Adds all of the elements in the specified collection to this
      * queue.  Attempts to addAll of a queue to itself result in
      * {@code IllegalArgumentException}. Further, the behavior of
@@ -165,16 +192,16 @@ public abstract class AbstractQueue<E>
      *
      * @param c collection containing elements to be added to this queue
      * @return {@code true} if this queue changed as a result of the call
-     * @throws ClassCastException if the class of an element of the specified
-     *         collection prevents it from being added to this queue
-     * @throws NullPointerException if the specified collection contains a
-     *         null element and this queue does not permit null elements,
-     *         or if the specified collection is null
+     * @throws ClassCastException       if the class of an element of the specified
+     *                                  collection prevents it from being added to this queue
+     * @throws NullPointerException     if the specified collection contains a
+     *                                  null element and this queue does not permit null elements,
+     *                                  or if the specified collection is null
      * @throws IllegalArgumentException if some property of an element of the
-     *         specified collection prevents it from being added to this
-     *         queue, or if the specified collection is this queue
-     * @throws IllegalStateException if not all the elements can be added at
-     *         this time due to insertion restrictions
+     *                                  specified collection prevents it from being added to this
+     *                                  queue, or if the specified collection is this queue
+     * @throws IllegalStateException    if not all the elements can be added at
+     *                                  this time due to insertion restrictions
      * @see #add(Object)
      */
     public boolean addAll(Collection<? extends E> c) {
