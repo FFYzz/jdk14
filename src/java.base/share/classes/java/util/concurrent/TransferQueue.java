@@ -35,7 +35,12 @@
 
 package java.util.concurrent;
 
+import java.lang.Object;
+
 /**
+ * TransferQueue 的使用场景：生产者等待消费者消费结束。
+ * 生产者调用 transfer 方法时会等待消费者消费之后的 "收据"
+ * <p>
  * A {@link BlockingQueue} in which producers may wait for consumers
  * to receive elements.  A {@code TransferQueue} may be useful for
  * example in message passing applications in which producers
@@ -44,11 +49,13 @@ package java.util.concurrent;
  * at other times enqueue elements (via method {@code put}) without
  * waiting for receipt.
  * {@linkplain #tryTransfer(Object) Non-blocking} and
- * {@linkplain #tryTransfer(Object,long,TimeUnit) time-out} versions of
+ * {@linkplain #tryTransfer(Object, long, TimeUnit) time-out} versions of
  * {@code tryTransfer} are also available.
  * A {@code TransferQueue} may also be queried, via {@link
  * #hasWaitingConsumer}, whether there are any threads waiting for
  * items, which is a converse analogy to a {@code peek} operation.
+ * <p>
+ * 有界队列
  *
  * <p>Like other blocking queues, a {@code TransferQueue} may be
  * capacity bounded.  If so, an attempted transfer operation may
@@ -61,83 +68,94 @@ package java.util.concurrent;
  * <a href="{@docRoot}/java.base/java/util/package-summary.html#CollectionsFramework">
  * Java Collections Framework</a>.
  *
- * @since 1.7
- * @author Doug Lea
  * @param <E> the type of elements held in this queue
+ * @author Doug Lea
+ * @since 1.7
  */
 public interface TransferQueue<E> extends BlockingQueue<E> {
     /**
+     * 将元素 transform 给 consumer。
+     * 如果 consumer 已经在等待接收该元素，那么 tryTransfer 会立刻返回。
+     * 如果 consumer 还没有准备接收，则会返回 false。
+     * <p>
      * Transfers the element to a waiting consumer immediately, if possible.
      *
      * <p>More precisely, transfers the specified element immediately
      * if there exists a consumer already waiting to receive it (in
-     * {@link #take} or timed {@link #poll(long,TimeUnit) poll}),
+     * {@link #take} or timed {@link #poll(long, TimeUnit) poll}),
      * otherwise returning {@code false} without enqueuing the element.
      *
      * @param e the element to transfer
      * @return {@code true} if the element was transferred, else
-     *         {@code false}
-     * @throws ClassCastException if the class of the specified element
-     *         prevents it from being added to this queue
-     * @throws NullPointerException if the specified element is null
+     * {@code false}
+     * @throws ClassCastException       if the class of the specified element
+     *                                  prevents it from being added to this queue
+     * @throws NullPointerException     if the specified element is null
      * @throws IllegalArgumentException if some property of the specified
-     *         element prevents it from being added to this queue
+     *                                  element prevents it from being added to this queue
      */
     boolean tryTransfer(E e);
 
     /**
+     * 将一个元素 transform 给 consumer，否则阻塞等待。
+     * <p>
      * Transfers the element to a consumer, waiting if necessary to do so.
      *
      * <p>More precisely, transfers the specified element immediately
      * if there exists a consumer already waiting to receive it (in
-     * {@link #take} or timed {@link #poll(long,TimeUnit) poll}),
+     * {@link #take} or timed {@link #poll(long, TimeUnit) poll}),
      * else waits until the element is received by a consumer.
      *
      * @param e the element to transfer
-     * @throws InterruptedException if interrupted while waiting,
-     *         in which case the element is not left enqueued
-     * @throws ClassCastException if the class of the specified element
-     *         prevents it from being added to this queue
-     * @throws NullPointerException if the specified element is null
+     * @throws InterruptedException     if interrupted while waiting,
+     *                                  in which case the element is not left enqueued
+     * @throws ClassCastException       if the class of the specified element
+     *                                  prevents it from being added to this queue
+     * @throws NullPointerException     if the specified element is null
      * @throws IllegalArgumentException if some property of the specified
-     *         element prevents it from being added to this queue
+     *                                  element prevents it from being added to this queue
      */
     void transfer(E e) throws InterruptedException;
 
     /**
+     * 与 {@link #tryTransfer(java.lang.Object)} 类似，该方法新增了超时时间
+     * 允许等待一段时间，若等待之后还未被 consumer 消费，那么就会返回 false。
+     * <p>
      * Transfers the element to a consumer if it is possible to do so
      * before the timeout elapses.
      *
      * <p>More precisely, transfers the specified element immediately
      * if there exists a consumer already waiting to receive it (in
-     * {@link #take} or timed {@link #poll(long,TimeUnit) poll}),
+     * {@link #take} or timed {@link #poll(long, TimeUnit) poll}),
      * else waits until the element is received by a consumer,
      * returning {@code false} if the specified wait time elapses
      * before the element can be transferred.
      *
-     * @param e the element to transfer
+     * @param e       the element to transfer
      * @param timeout how long to wait before giving up, in units of
-     *        {@code unit}
-     * @param unit a {@code TimeUnit} determining how to interpret the
-     *        {@code timeout} parameter
+     *                {@code unit}
+     * @param unit    a {@code TimeUnit} determining how to interpret the
+     *                {@code timeout} parameter
      * @return {@code true} if successful, or {@code false} if
-     *         the specified waiting time elapses before completion,
-     *         in which case the element is not left enqueued
-     * @throws InterruptedException if interrupted while waiting,
-     *         in which case the element is not left enqueued
-     * @throws ClassCastException if the class of the specified element
-     *         prevents it from being added to this queue
-     * @throws NullPointerException if the specified element is null
+     * the specified waiting time elapses before completion,
+     * in which case the element is not left enqueued
+     * @throws InterruptedException     if interrupted while waiting,
+     *                                  in which case the element is not left enqueued
+     * @throws ClassCastException       if the class of the specified element
+     *                                  prevents it from being added to this queue
+     * @throws NullPointerException     if the specified element is null
      * @throws IllegalArgumentException if some property of the specified
-     *         element prevents it from being added to this queue
+     *                                  element prevents it from being added to this queue
      */
     boolean tryTransfer(E e, long timeout, TimeUnit unit)
-        throws InterruptedException;
+            throws InterruptedException;
 
     /**
+     * 返回是否有 consumer 在等待
+     * <p>
      * Returns {@code true} if there is at least one consumer waiting
      * to receive an element via {@link #take} or
-     * timed {@link #poll(long,TimeUnit) poll}.
+     * timed {@link #poll(long, TimeUnit) poll}.
      * The return value represents a momentary state of affairs.
      *
      * @return {@code true} if there is at least one waiting consumer
@@ -145,9 +163,11 @@ public interface TransferQueue<E> extends BlockingQueue<E> {
     boolean hasWaitingConsumer();
 
     /**
+     * 返回在等待的 consumer 的个数
+     * <p>
      * Returns an estimate of the number of consumers waiting to
      * receive elements via {@link #take} or timed
-     * {@link #poll(long,TimeUnit) poll}.  The return value is an
+     * {@link #poll(long, TimeUnit) poll}.  The return value is an
      * approximation of a momentary state of affairs, that may be
      * inaccurate if consumers have completed or given up waiting.
      * The value may be useful for monitoring and heuristics, but
