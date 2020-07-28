@@ -28,10 +28,14 @@ package java.lang;
 import java.lang.annotation.*;
 
 /**
+ * 该注解用于声明接口为函数式接口。
+ * <p>
  * An informative annotation type used to indicate that an interface
  * type declaration is intended to be a <i>functional interface</i> as
  * defined by the Java Language Specification.
- *
+ * <p>
+ * 函数式接口有且只有一个抽象方法。
+ * <p>
  * Conceptually, a functional interface has exactly one abstract
  * method.  Since {@linkplain java.lang.reflect.Method#isDefault()
  * default methods} have an implementation, they are not abstract.  If
@@ -66,4 +70,5 @@ import java.lang.annotation.*;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface FunctionalInterface {}
+public @interface FunctionalInterface {
+}
